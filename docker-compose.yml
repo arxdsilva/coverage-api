@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: coverage-api-db
+    environment:
+      POSTGRES_USER: coverage
+      POSTGRES_PASSWORD: coverage
+      POSTGRES_DB: coverage
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coverage -d coverage"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: golang:1.25-alpine
+    container_name: coverage-api-migrate
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      DATABASE_URL: postgres://coverage:coverage@db:5432/coverage?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["go", "run", "github.com/pressly/goose/v3/cmd/goose@latest", "-dir", "/app/migrations", "postgres", "postgres://coverage:coverage@db:5432/coverage?sslmode=disable"]
+    command: ["up"]
+    restart: "no"
+
+  api:
+    image: golang:1.25-alpine
+    container_name: coverage-api-app
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      SERVER_ADDR: :8080
+      API_KEY_HEADER: X-API-Key
+      API_KEY_SECRET: dev-local-key
+      DATABASE_URL: postgres://coverage:coverage@db:5432/coverage?sslmode=disable
+      SHUTDOWN_TIMEOUT_SECONDS: "10"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    command: ["go", "run", "./cmd/api"]
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
