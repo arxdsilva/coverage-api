@@ -1,5 +1,7 @@
 # coverage-api
 
+[![CI](https://github.com/arxdsilva/coverage-api/actions/workflows/ci.yml/badge.svg)](https://github.com/arxdsilva/coverage-api/actions/workflows/ci.yml)
+
 Go REST API for ingesting coverage runs and computing coverage deltas.
 
 ## Architecture
@@ -135,6 +137,17 @@ curl -i "$BASE_URL/v1/projects/$PROJECT_ID/coverage-runs/latest-comparison" \
 ```
 
 ## Coverage CLI Workflow
+
+## GitHub Actions
+
+Workflow file: `.github/workflows/ci.yml`
+
+It runs tests on pushes and pull requests, generates a coverage profile artifact, and optionally uploads coverage to this API on push events.
+
+To enable coverage upload from CI, add these repository secrets:
+
+- `COVERAGE_API_URL` (example: `https://your-api.example.com/v1/coverage-runs`)
+- `COVERAGE_API_KEY`
 
 Install the CLI from GitHub:
 
