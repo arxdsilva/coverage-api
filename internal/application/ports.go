@@ -35,6 +35,7 @@ type PackageCoverageRepository interface {
 
 type APIKeyAuthenticator interface {
 	Authenticate(ctx context.Context, apiKey string) error
+	WantedAPIKey() string
 }
 
 type Clock interface {

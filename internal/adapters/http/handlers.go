@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/arxdsilva/coverage-api/internal/application"
 
 	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
 type Handler struct {
@@ -34,34 +36,71 @@ func NewHandler(
 }
 
 func (h *Handler) IngestCoverageRun(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	requestID := chiMiddleware.GetReqID(r.Context())
+	slog.Info("operation",
+		"name", "ingest_coverage_run",
+		"stage", "start",
+		"request_id", requestID,
+	)
+
 	var in application.IngestCoverageRunInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		slog.Warn("operation",
+			"name", "ingest_coverage_run",
+			"stage", "decode_failed",
+			"request_id", requestID,
+			"error", err,
+		)
 		writeError(w, http.StatusBadRequest, application.NewInvalidArgument("invalid JSON request body", nil))
 		return
 	}
 
 	out, err := h.ingest.Execute(r.Context(), in)
 	if err != nil {
+		slog.Error("operation",
+			"name", "ingest_coverage_run",
+			"stage", "execute_failed",
+			"request_id", requestID,
+			"project_key", in.ProjectKey,
+			"error", err,
+		)
 		writeAppError(w, err)
 		return
 	}
 
+	slog.Info("operation",
+		"name", "ingest_coverage_run",
+		"stage", "success",
+		"request_id", requestID,
+		"project_id", out.Project.ID,
+		"run_id", out.Run.ID,
+		"duration_ms", time.Since(start).Milliseconds(),
+	)
 	writeJSON(w, http.StatusOK, out)
 }
 
 func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	requestID := chiMiddleware.GetReqID(r.Context())
 	projectID := chi.URLParam(r, "projectId")
+	slog.Info("operation", "name", "get_project", "stage", "start", "request_id", requestID, "project_id", projectID)
 	out, err := h.getProject.Execute(r.Context(), projectID)
 	if err != nil {
+		slog.Error("operation", "name", "get_project", "stage", "execute_failed", "request_id", requestID, "project_id", projectID, "error", err)
 		writeAppError(w, err)
 		return
 	}
+	slog.Info("operation", "name", "get_project", "stage", "success", "request_id", requestID, "project_id", projectID, "duration_ms", time.Since(start).Milliseconds())
 	writeJSON(w, http.StatusOK, out)
 }
 
 func (h *Handler) ListCoverageRuns(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	requestID := chiMiddleware.GetReqID(r.Context())
 	projectID := chi.URLParam(r, "projectId")
 	q := r.URL.Query()
+	slog.Info("operation", "name", "list_coverage_runs", "stage", "start", "request_id", requestID, "project_id", projectID)
 
 	page, _ := strconv.Atoi(q.Get("page"))
 	pageSize, _ := strconv.Atoi(q.Get("pageSize"))
@@ -70,6 +109,7 @@ func (h *Handler) ListCoverageRuns(w http.ResponseWriter, r *http.Request) {
 	if fromRaw := q.Get("from"); fromRaw != "" {
 		parsed, err := time.Parse(time.RFC3339, fromRaw)
 		if err != nil {
+			slog.Warn("operation", "name", "list_coverage_runs", "stage", "validation_failed", "request_id", requestID, "field", "from", "error", err)
 			writeError(w, http.StatusBadRequest, application.NewInvalidArgument("from must be RFC3339", map[string]any{"field": "from"}))
 			return
 		}
@@ -80,6 +120,7 @@ func (h *Handler) ListCoverageRuns(w http.ResponseWriter, r *http.Request) {
 	if toRaw := q.Get("to"); toRaw != "" {
 		parsed, err := time.Parse(time.RFC3339, toRaw)
 		if err != nil {
+			slog.Warn("operation", "name", "list_coverage_runs", "stage", "validation_failed", "request_id", requestID, "field", "to", "error", err)
 			writeError(w, http.StatusBadRequest, application.NewInvalidArgument("to must be RFC3339", map[string]any{"field": "to"}))
 			return
 		}
@@ -95,20 +136,27 @@ func (h *Handler) ListCoverageRuns(w http.ResponseWriter, r *http.Request) {
 		PageSize:  pageSize,
 	})
 	if err != nil {
+		slog.Error("operation", "name", "list_coverage_runs", "stage", "execute_failed", "request_id", requestID, "project_id", projectID, "error", err)
 		writeAppError(w, err)
 		return
 	}
 
+	slog.Info("operation", "name", "list_coverage_runs", "stage", "success", "request_id", requestID, "project_id", projectID, "items", len(out.Items), "duration_ms", time.Since(start).Milliseconds())
 	writeJSON(w, http.StatusOK, out)
 }
 
 func (h *Handler) GetLatestComparison(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	requestID := chiMiddleware.GetReqID(r.Context())
 	projectID := chi.URLParam(r, "projectId")
+	slog.Info("operation", "name", "get_latest_comparison", "stage", "start", "request_id", requestID, "project_id", projectID)
 	out, err := h.latestComparison.Execute(r.Context(), projectID)
 	if err != nil {
+		slog.Error("operation", "name", "get_latest_comparison", "stage", "execute_failed", "request_id", requestID, "project_id", projectID, "error", err)
 		writeAppError(w, err)
 		return
 	}
+	slog.Info("operation", "name", "get_latest_comparison", "stage", "success", "request_id", requestID, "project_id", projectID, "run_id", out.Run.ID, "duration_ms", time.Since(start).Milliseconds())
 	writeJSON(w, http.StatusOK, out)
 }
 

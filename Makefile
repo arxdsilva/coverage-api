@@ -24,6 +24,7 @@ help:
 	@echo "  make run                - Run API locally"
 	@echo "  make compose-up         - Start db + migrate + api via docker compose"
 	@echo "                            Example with busy local 5432: DB_PORT=5433 make compose-up"
+	@echo "                            If upgrading Postgres major versions: make compose-down then make compose-up"
 	@echo "  make compose-down       - Stop docker compose services"
 	@echo "  make compose-logs       - Tail compose logs"
 	@echo "  make migrate-up         - Run DB migrations locally (requires local DB)"

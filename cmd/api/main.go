@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,23 +21,30 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	slog.SetDefault(logger)
+
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		slog.Error("startup_failed", "stage", "load_config", "error", err)
+		os.Exit(1)
 	}
 	if err := cfg.Validate(); err != nil {
-		log.Fatalf("invalid config: %v", err)
+		slog.Error("startup_failed", "stage", "validate_config", "error", err)
+		os.Exit(1)
 	}
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("failed to create database pool: %v", err)
+		slog.Error("startup_failed", "stage", "create_db_pool", "error", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		slog.Error("startup_failed", "stage", "ping_db", "error", err)
+		os.Exit(1)
 	}
 
 	projectRepo := postgres.NewProjectRepository(pool)
@@ -67,7 +74,7 @@ func main() {
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("coverage-api listening on %s", cfg.ServerAddr)
+		slog.Info("server_starting", "addr", cfg.ServerAddr)
 		errCh <- server.ListenAndServe()
 	}()
 
@@ -76,16 +83,18 @@ func main() {
 
 	select {
 	case sig := <-sigCh:
-		log.Printf("received signal %s, shutting down", sig.String())
+		slog.Info("shutdown_signal_received", "signal", sig.String())
 	case err := <-errCh:
 		if err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server failed: %v", err)
+			slog.Error("server_failed", "error", err)
+			os.Exit(1)
 		}
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	defer cancel()
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Printf("graceful shutdown failed: %v", err)
+		slog.Error("shutdown_failed", "error", err)
 	}
+	slog.Info("server_stopped")
 }

@@ -1,15 +1,16 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:18
     container_name: coverage-api-db
     environment:
       POSTGRES_USER: coverage
       POSTGRES_PASSWORD: coverage
       POSTGRES_DB: coverage
+      PGDATA: /var/lib/postgresql/18/docker
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres18_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U coverage -d coverage"]
       interval: 5s
@@ -53,4 +54,4 @@ services:
       - "8080:8080"
 
 volumes:
-  postgres_data:
+  postgres18_data:

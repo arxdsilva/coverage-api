@@ -15,11 +15,14 @@ func NewEnvAPIKeyAuthenticator(expectedSecret string) *EnvAPIKeyAuthenticator {
 	return &EnvAPIKeyAuthenticator{expectedSecret: expectedSecret}
 }
 
-func (a *EnvAPIKeyAuthenticator) Authenticate(ctx context.Context, apiKey string) error {
-	_ = ctx
+func (a *EnvAPIKeyAuthenticator) Authenticate(_ context.Context, apiKey string) error {
 	if subtle.ConstantTimeCompare([]byte(apiKey), []byte(a.expectedSecret)) != 1 {
 		return domain.ErrNotFound
 	}
 
 	return nil
+}
+
+func (a *EnvAPIKeyAuthenticator) WantedAPIKey() string {
+	return a.expectedSecret
 }
