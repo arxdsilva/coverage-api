@@ -1,0 +1,151 @@
+package http
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/arxdsilva/coverage-api/internal/application"
+
+	"github.com/go-chi/chi/v5"
+)
+
+type Handler struct {
+	ingest           *application.IngestCoverageRunUseCase
+	getProject       *application.GetProjectUseCase
+	listRuns         *application.ListCoverageRunsUseCase
+	latestComparison *application.GetLatestComparisonUseCase
+}
+
+func NewHandler(
+	ingest *application.IngestCoverageRunUseCase,
+	getProject *application.GetProjectUseCase,
+	listRuns *application.ListCoverageRunsUseCase,
+	latestComparison *application.GetLatestComparisonUseCase,
+) *Handler {
+	return &Handler{
+		ingest:           ingest,
+		getProject:       getProject,
+		listRuns:         listRuns,
+		latestComparison: latestComparison,
+	}
+}
+
+func (h *Handler) IngestCoverageRun(w http.ResponseWriter, r *http.Request) {
+	var in application.IngestCoverageRunInput
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		writeError(w, http.StatusBadRequest, application.NewInvalidArgument("invalid JSON request body", nil))
+		return
+	}
+
+	out, err := h.ingest.Execute(r.Context(), in)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "projectId")
+	out, err := h.getProject.Execute(r.Context(), projectID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (h *Handler) ListCoverageRuns(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "projectId")
+	q := r.URL.Query()
+
+	page, _ := strconv.Atoi(q.Get("page"))
+	pageSize, _ := strconv.Atoi(q.Get("pageSize"))
+
+	var from *time.Time
+	if fromRaw := q.Get("from"); fromRaw != "" {
+		parsed, err := time.Parse(time.RFC3339, fromRaw)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, application.NewInvalidArgument("from must be RFC3339", map[string]any{"field": "from"}))
+			return
+		}
+		from = &parsed
+	}
+
+	var to *time.Time
+	if toRaw := q.Get("to"); toRaw != "" {
+		parsed, err := time.Parse(time.RFC3339, toRaw)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, application.NewInvalidArgument("to must be RFC3339", map[string]any{"field": "to"}))
+			return
+		}
+		to = &parsed
+	}
+
+	out, err := h.listRuns.Execute(r.Context(), application.ListCoverageRunsInput{
+		ProjectID: projectID,
+		Branch:    q.Get("branch"),
+		From:      from,
+		To:        to,
+		Page:      page,
+		PageSize:  pageSize,
+	})
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (h *Handler) GetLatestComparison(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "projectId")
+	out, err := h.latestComparison.Execute(r.Context(), projectID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func writeAppError(w http.ResponseWriter, err error) {
+	var appErr *application.AppError
+	if errors.As(err, &appErr) {
+		switch appErr.Code {
+		case application.CodeInvalidArgument:
+			writeError(w, http.StatusBadRequest, appErr)
+		case application.CodeNotFound:
+			writeError(w, http.StatusNotFound, appErr)
+		case application.CodeUnauthenticated:
+			writeError(w, http.StatusUnauthorized, appErr)
+		default:
+			writeError(w, http.StatusInternalServerError, appErr)
+		}
+		return
+	}
+
+	writeError(w, http.StatusInternalServerError, &application.AppError{
+		Code:    application.CodeInternal,
+		Message: "internal server error",
+	})
+}
+
+func writeError(w http.ResponseWriter, status int, appErr *application.AppError) {
+	writeJSON(w, status, map[string]any{
+		"error": map[string]any{
+			"code":    appErr.Code,
+			"message": appErr.Message,
+			"details": appErr.Details,
+		},
+	})
+}
+
+func writeJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(payload)
+}
