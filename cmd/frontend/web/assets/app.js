@@ -1,4 +1,3 @@
-const projectList = document.getElementById('projectList');
 const selectedProjectName = document.getElementById('selectedProjectName');
 const selectedProjectMeta = document.getElementById('selectedProjectMeta');
 const packagesBody = document.getElementById('packagesBody');
