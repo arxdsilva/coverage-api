@@ -3,6 +3,7 @@ SHELL := /bin/sh
 COMPOSE ?= docker compose
 GOOSE ?= go run github.com/pressly/goose/v3/cmd/goose@latest
 MIGRATIONS_DIR ?= ./migrations
+SEEDS_FILE ?= ./seeds/001_seed.sql
 
 DB_USER ?= coverage
 DB_PASSWORD ?= coverage
@@ -15,6 +16,7 @@ COMPOSE_DATABASE_URL ?= postgres://$(DB_USER):$(DB_PASSWORD)@db:5432/$(DB_NAME)?
 .PHONY: compose-up compose-down compose-logs compose-ps
 .PHONY: migrate-up migrate-down migrate-status migrate-reset migrate-create
 .PHONY: migrate-up-docker migrate-down-docker
+.PHONY: seed seed-docker
 .PHONY: coverage-file coverage-upload
 .PHONY: frontend-run frontend-dev
 
@@ -33,7 +35,7 @@ help:
 	@echo "  make run                - Run API locally"
 	@echo "  make frontend-run       - Run frontend dashboard locally on :8090"
 	@echo "  make frontend-dev       - Run API and frontend together (local)"
-	@echo "  make compose-up         - Start db + migrate + api via docker compose"
+	@echo "  make compose-up         - Start db + migrate + seed + api + frontend via docker compose"
 	@echo "                            Example with busy local 5432: DB_PORT=5433 make compose-up"
 	@echo "                            If upgrading Postgres major versions: make compose-down then make compose-up"
 	@echo "  make compose-down       - Stop docker compose services"
@@ -45,6 +47,8 @@ help:
 	@echo "  make migrate-create name=<migration_name> - Create new SQL migration"
 	@echo "  make migrate-up-docker  - Run migrations against compose DB"
 	@echo "  make migrate-down-docker - Roll back one migration against compose DB"
+	@echo "  make seed               - Run local seed SQL against local DB"
+	@echo "  make seed-docker        - Run seed SQL through compose seed service"
 	@echo "  make coverage-file      - Generate coverage.out and API payload JSON file"
 	@echo "  make coverage-upload    - Generate + upload coverage payload to running API"
 
@@ -101,6 +105,12 @@ migrate-up-docker:
 
 migrate-down-docker:
 	$(COMPOSE) run --rm migrate down
+
+seed:
+	psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -f "$(SEEDS_FILE)"
+
+seed-docker:
+	$(COMPOSE) run --rm seed
 
 coverage-file:
 	go test ./... -coverprofile=$(COVERAGE_PROFILE)
