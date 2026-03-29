@@ -53,5 +53,23 @@ services:
     ports:
       - "8080:8080"
 
+  frontend:
+    image: golang:1.25-alpine
+    container_name: coverage-api-frontend
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      FRONTEND_ADDR: :8090
+      API_BASE_URL: http://api:8080
+      API_KEY_HEADER: X-API-Key
+      API_KEY_SECRET: dev-local-key
+    depends_on:
+      api:
+        condition: service_started
+    command: ["go", "run", "./cmd/frontend"]
+    ports:
+      - "8090:8090"
+
 volumes:
   postgres18_data:
