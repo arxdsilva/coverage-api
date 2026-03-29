@@ -32,6 +32,25 @@ services:
     command: ["up"]
     restart: "no"
 
+  # DEV ONLY: remove this service and the api depends_on entry before production deployment.
+  seed:
+    image: postgres:18
+    container_name: coverage-api-seed
+    working_dir: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      PGPASSWORD: coverage
+    entrypoint: ["sh", "-c"]
+    command:
+      - psql "postgres://coverage:coverage@db:5432/coverage?sslmode=disable" -v ON_ERROR_STOP=1 -f /app/seeds/001_seed.sql
+    restart: "no"
+
   api:
     image: golang:1.25-alpine
     container_name: coverage-api-app
@@ -48,6 +67,8 @@ services:
       db:
         condition: service_healthy
       migrate:
+        condition: service_completed_successfully
+      seed:
         condition: service_completed_successfully
     command: ["go", "run", "./cmd/api"]
     ports:
