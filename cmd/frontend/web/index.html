@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coverage API Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <main class="app-shell">
+      <aside class="sidebar card">
+        <div class="sidebar-header">
+          <p class="eyebrow">Coverage API</p>
+          <h1>Projects</h1>
+          <button id="refreshProjects" class="btn">Refresh</button>
+        </div>
+        <ul id="projectList" class="project-list"></ul>
+      </aside>
+
+      <section class="content">
+        <header class="top card">
+          <p class="eyebrow">Overview</p>
+          <h2 id="selectedProjectName">Select a project</h2>
+          <p id="selectedProjectMeta" class="muted">No project selected</p>
+        </header>
+
+        <section class="stats-grid">
+          <article class="card stat">
+            <p class="label">Current Coverage</p>
+            <p id="currentCoverage" class="value">-</p>
+          </article>
+          <article class="card stat">
+            <p class="label">Previous Coverage</p>
+            <p id="previousCoverage" class="value">-</p>
+          </article>
+          <article class="card stat">
+            <p class="label">Delta</p>
+            <p id="deltaCoverage" class="value">-</p>
+          </article>
+          <article class="card stat">
+            <p class="label">Threshold Status</p>
+            <p id="thresholdStatus" class="value">-</p>
+          </article>
+        </section>
+
+        <section class="tables-grid">
+          <article class="card table-card">
+            <div class="table-head">
+              <h3>Latest Comparison Packages</h3>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Package</th>
+                    <th>Current</th>
+                    <th>Previous</th>
+                    <th>Delta</th>
+                    <th>Direction</th>
+                  </tr>
+                </thead>
+                <tbody id="packagesBody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card table-card">
+            <div class="table-head">
+              <h3>Recent Runs</h3>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Run</th>
+                    <th>Branch</th>
+                    <th>Commit</th>
+                    <th>Coverage</th>
+                    <th>Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="runsBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="/assets/app.js"></script>
+  </body>
+</html>

@@ -16,6 +16,7 @@ COMPOSE_DATABASE_URL ?= postgres://$(DB_USER):$(DB_PASSWORD)@db:5432/$(DB_NAME)?
 .PHONY: migrate-up migrate-down migrate-status migrate-reset migrate-create
 .PHONY: migrate-up-docker migrate-down-docker
 .PHONY: coverage-file coverage-upload
+.PHONY: frontend-run frontend-dev
 
 COVERAGE_PROFILE ?= coverage.out
 COVERAGE_PAYLOAD ?= coverage-upload.json
@@ -30,6 +31,8 @@ help:
 	@echo "  make fmt                - Format Go files"
 	@echo "  make test               - Run tests"
 	@echo "  make run                - Run API locally"
+	@echo "  make frontend-run       - Run frontend dashboard locally on :8090"
+	@echo "  make frontend-dev       - Run API and frontend together (local)"
 	@echo "  make compose-up         - Start db + migrate + api via docker compose"
 	@echo "                            Example with busy local 5432: DB_PORT=5433 make compose-up"
 	@echo "                            If upgrading Postgres major versions: make compose-down then make compose-up"
@@ -56,6 +59,14 @@ test:
 
 run:
 	DATABASE_URL="$(DATABASE_URL)" go run ./cmd/api
+
+frontend-run:
+	FRONTEND_ADDR=":8090" API_BASE_URL="http://localhost:8080" API_KEY_SECRET="$(API_KEY)" go run ./cmd/frontend
+
+frontend-dev:
+	@echo "Run in two terminals:"
+	@echo "  1) DATABASE_URL=\"$(DATABASE_URL)\" API_KEY_SECRET=\"$(API_KEY)\" go run ./cmd/api"
+	@echo "  2) FRONTEND_ADDR=\":8090\" API_BASE_URL=\"http://localhost:8080\" API_KEY_SECRET=\"$(API_KEY)\" go run ./cmd/frontend"
 
 compose-up:
 	$(COMPOSE) up -d --build
