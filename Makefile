@@ -24,7 +24,7 @@ COVERAGE_PROFILE ?= coverage.out
 COVERAGE_PAYLOAD ?= coverage-upload.json
 API_URL ?= http://localhost:8080/v1/coverage-runs
 API_KEY ?= dev-local-key
-COVERAGE_PROJECT_KEY ?= github.com/arxdsilva/coverage-api
+COVERAGE_PROJECT_KEY ?= github.com/arxdsilva/opencoverage
 COVERAGE_PROJECT_NAME ?= coverage-api
 
 help:

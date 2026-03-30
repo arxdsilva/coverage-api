@@ -1,6 +1,6 @@
 # coverage-api
 
-[![CI](https://github.com/arxdsilva/coverage-api/actions/workflows/ci.yml/badge.svg)](https://github.com/arxdsilva/coverage-api/actions/workflows/ci.yml)
+[![CI](https://github.com/arxdsilva/opencoverage/actions/workflows/ci.yml/badge.svg)](https://github.com/arxdsilva/opencoverage/actions/workflows/ci.yml)
 
 Go REST API for ingesting coverage runs and computing coverage deltas.
 
@@ -164,7 +164,7 @@ Example response:
 {
 	"project": {
 		"id": "1b22413a-f9d2-4675-8ab9-f0ee309ef871",
-		"projectKey": "github.com/arxdsilva/coverage-api",
+		"projectKey": "github.com/arxdsilva/opencoverage",
 		"name": "coverage-api",
 		"defaultBranch": "main",
 		"globalThresholdPercent": 80,
@@ -190,7 +190,7 @@ Example response:
 	},
 	"packages": [
 		{
-			"importPath": "github.com/arxdsilva/coverage-api/internal/domain",
+			"importPath": "github.com/arxdsilva/opencoverage/internal/domain",
 			"previousCoveragePercent": null,
 			"currentCoveragePercent": 50,
 			"deltaPercent": null,
@@ -207,7 +207,20 @@ Fields typically used in CI policy:
 - `comparison.currentTotalCoveragePercent`
 - `comparison.previousTotalCoveragePercent`
 
+## Self-Hosted Deployment
+
+For detailed instructions on deploying coverage-api and its frontend on your own infrastructure, see [SELF_HOSTING.md](SELF_HOSTING.md). Covers:
+
+- Quick start with Docker Compose
+- Production-grade container deployment
+- Database setup and migrations
+- Networking and reverse proxy configuration
+- Security and authentication
+- Monitoring, backups, and troubleshooting
+
 ## GitHub Actions
+
+For detailed GitHub Actions workflow examples, see [GITHUB_ACTIONS_INTEGRATION.md](GITHUB_ACTIONS_INTEGRATION.md).
 
 Workflow file: `.github/workflows/ci.yml`
 
@@ -221,22 +234,22 @@ To enable coverage upload from CI, add these repository secrets:
 Install the CLI from GitHub:
 
 ```bash
-go install github.com/arxdsilva/coverage-api/cmd/coveragecli@latest
+go install github.com/arxdsilva/opencoverage/cmd/coveragecli@latest
 ```
 
 CI-friendly (pin to a specific ref/tag/commit):
 
 ```bash
-go install github.com/arxdsilva/coverage-api/cmd/coveragecli@v1.0.0
+go install github.com/arxdsilva/opencoverage/cmd/coveragecli@v1.0.0
 # or
-go install github.com/arxdsilva/coverage-api/cmd/coveragecli@<git-sha>
+go install github.com/arxdsilva/opencoverage/cmd/coveragecli@<git-sha>
 ```
 
 GitHub Actions step example:
 
 ```yaml
 - name: Install coverage CLI
-	run: go install github.com/arxdsilva/coverage-api/cmd/coveragecli@latest
+	run: go install github.com/arxdsilva/opencoverage/cmd/coveragecli@latest
 
 - name: Upload coverage to API
 	env:

@@ -40,7 +40,7 @@ type ingestPayload struct {
 func main() {
 	coverprofile := flag.String("coverprofile", "coverage.out", "Path to go coverage profile")
 	out := flag.String("out", "coverage-upload.json", "Path to output JSON payload file")
-	projectKey := flag.String("project-key", "github.com/arxdsilva/coverage-api", "Project key")
+	projectKey := flag.String("project-key", "github.com/arxdsilva/opencoverage", "Project key")
 	projectName := flag.String("project-name", "coverage-api", "Project display name")
 	projectGroup := flag.String("project-group", "", "Project group (optional)")
 	defaultBranch := flag.String("default-branch", "main", "Default branch")

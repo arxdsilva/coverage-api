@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/arxdsilva/coverage-api/internal/application"
+	"github.com/arxdsilva/opencoverage/internal/application"
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"

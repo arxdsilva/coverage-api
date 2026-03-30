@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/arxdsilva/coverage-api/internal/domain"
+	"github.com/arxdsilva/opencoverage/internal/domain"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

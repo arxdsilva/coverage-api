@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/arxdsilva/coverage-api/internal/domain"
+	"github.com/arxdsilva/opencoverage/internal/domain"
 )
 
 type GetProjectUseCase struct {

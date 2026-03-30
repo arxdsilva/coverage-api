@@ -1,6 +1,6 @@
 package application
 
-import "github.com/arxdsilva/coverage-api/internal/domain"
+import "github.com/arxdsilva/opencoverage/internal/domain"
 
 type ProjectResponse struct {
 	ID                     string  `json:"id"`

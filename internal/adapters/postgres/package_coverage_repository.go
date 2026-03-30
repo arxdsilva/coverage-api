@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/arxdsilva/coverage-api/internal/domain"
+	"github.com/arxdsilva/opencoverage/internal/domain"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arxdsilva/coverage-api/internal/application"
-	"github.com/arxdsilva/coverage-api/internal/domain"
+	"github.com/arxdsilva/opencoverage/internal/application"
+	"github.com/arxdsilva/opencoverage/internal/domain"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 )

@@ -1,4 +1,4 @@
-module github.com/arxdsilva/coverage-api
+module github.com/arxdsilva/opencoverage
 
 go 1.25.4
 

@@ -9,13 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/arxdsilva/coverage-api/internal/adapters/auth"
-	httpadapter "github.com/arxdsilva/coverage-api/internal/adapters/http"
-	"github.com/arxdsilva/coverage-api/internal/adapters/postgres"
-	"github.com/arxdsilva/coverage-api/internal/application"
-	"github.com/arxdsilva/coverage-api/internal/platform/clock"
-	"github.com/arxdsilva/coverage-api/internal/platform/config"
-	"github.com/arxdsilva/coverage-api/internal/platform/idgen"
+	"github.com/arxdsilva/opencoverage/internal/adapters/auth"
+	httpadapter "github.com/arxdsilva/opencoverage/internal/adapters/http"
+	"github.com/arxdsilva/opencoverage/internal/adapters/postgres"
+	"github.com/arxdsilva/opencoverage/internal/application"
+	"github.com/arxdsilva/opencoverage/internal/platform/clock"
+	"github.com/arxdsilva/opencoverage/internal/platform/config"
+	"github.com/arxdsilva/opencoverage/internal/platform/idgen"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arxdsilva/coverage-api/internal/application"
+	"github.com/arxdsilva/opencoverage/internal/application"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

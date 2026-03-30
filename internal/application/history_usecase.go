@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/arxdsilva/coverage-api/internal/domain"
+	"github.com/arxdsilva/opencoverage/internal/domain"
 )
 
 type ListCoverageRunsInput struct {
