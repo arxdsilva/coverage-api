@@ -50,6 +50,10 @@ body {
   overflow: hidden;
 }
 
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
 .card {
   background: linear-gradient(160deg, rgba(25, 37, 62, 0.95), rgba(14, 21, 36, 0.95));
   border: 1px solid var(--line);
@@ -69,6 +73,30 @@ body {
 .sidebar-header {
   display: grid;
   gap: 8px;
+}
+
+.sidebar-toggle {
+  justify-self: start;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.app-shell.sidebar-collapsed .sidebar {
+  padding: 12px 8px;
+}
+
+.app-shell.sidebar-collapsed .sidebar-header {
+  justify-items: center;
+}
+
+.app-shell.sidebar-collapsed .sidebar-header > :not(.sidebar-toggle),
+.app-shell.sidebar-collapsed .project-selector-card {
+  display: none;
 }
 
 .project-list-wrap {
@@ -691,6 +719,11 @@ td.code {
     grid-template-rows: minmax(180px, 35vh) minmax(0, 1fr);
   }
 
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(80px, auto) minmax(0, 1fr);
+  }
+
   .sidebar {
     grid-template-rows: auto minmax(0, 1fr);
     min-height: 0;
@@ -714,6 +747,19 @@ td.code {
 
   .trend-chart-wrap {
     width: 100%;
+  }
+
+  .app-shell.sidebar-collapsed .sidebar {
+    padding: 12px;
+  }
+
+  .app-shell.sidebar-collapsed .sidebar-header {
+    justify-items: start;
+  }
+
+  .app-shell.sidebar-collapsed .sidebar-header > :not(.sidebar-toggle),
+  .app-shell.sidebar-collapsed .project-selector-card {
+    display: grid;
   }
 
   .heatmap-grid {

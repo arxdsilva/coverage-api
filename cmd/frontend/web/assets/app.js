@@ -21,6 +21,8 @@ const compareBaseline = document.getElementById('compareBaseline');
 const compareRunType = document.getElementById('compareRunType');
 const branchSelector = document.getElementById('branchSelector');
 const trendSubtitle = document.getElementById('trendSubtitle');
+const appShell = document.getElementById('appShell');
+const toggleSidebar = document.getElementById('toggleSidebar');
 
 let projects = [];
 let allProjects = [];
@@ -32,8 +34,13 @@ let heatmapItems = [];
 let trendChart = null;
 let heatmapLayoutFrame = 0;
 let trendRequestSequence = 0;
+const sidebarCollapsedKey = 'opencoverage.sidebarCollapsed';
 
 refreshProjects.addEventListener('click', () => loadProjects());
+toggleSidebar.addEventListener('click', () => {
+  const shouldCollapse = !appShell.classList.contains('sidebar-collapsed');
+  setSidebarCollapsed(shouldCollapse);
+});
 openHeatmap.addEventListener('click', () => {
   const isOpen = heatmapOverlay.classList.contains('open');
   toggleHeatmapOverlay(!isOpen);
@@ -51,6 +58,8 @@ branchSelector.addEventListener('change', async (e) => {
 });
 window.addEventListener('resize', () => scheduleHeatmapLayout());
 
+initializeSidebarState();
+
 function toggleHeatmapOverlay(open) {
   heatmapOverlay.classList.toggle('open', open);
   heatmapOverlay.setAttribute('aria-hidden', String(!open));
@@ -58,6 +67,20 @@ function toggleHeatmapOverlay(open) {
   if (open) {
     scheduleHeatmapLayout();
   }
+}
+
+function initializeSidebarState() {
+  const persisted = window.localStorage.getItem(sidebarCollapsedKey);
+  setSidebarCollapsed(persisted === 'true');
+}
+
+function setSidebarCollapsed(collapsed) {
+  appShell.classList.toggle('sidebar-collapsed', collapsed);
+  toggleSidebar.textContent = collapsed ? '▸' : '◂';
+  toggleSidebar.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+  toggleSidebar.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+  toggleSidebar.setAttribute('aria-expanded', String(!collapsed));
+  window.localStorage.setItem(sidebarCollapsedKey, String(collapsed));
 }
 
 async function loadProjects() {
