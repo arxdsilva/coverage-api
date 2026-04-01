@@ -99,18 +99,41 @@ The dashboard includes an interactive heatmap view of all projects accessible vi
 
 - **Group Organization**: Projects with an assigned group appear as balanced panels within the heatmap overlay
 - **Responsive Layout**: Groups automatically reflow to fill the visible overlay area as panels
-- **Color Coding**: Groups are color-coded by overall status (green for passing/up, red for failing/down, neutral for other states)
+- **Color Coding**: Individual project tiles are color-coded by coverage delta on a -3% to +3% scale. Seven CSS classes (`delta-neg-3` through `delta-pos-3`) map to a red-to-green gradient — red shades for regression, neutral grey for no change, green shades for improvement. A legend strip in the overlay header shows the full scale at a glance.
 - **Per-Group Tiles**: Each group contains project tiles sized to fill the group's allocated space
 - **Real-time Relayout**: Groups reflow on window resize to maintain optimal use of screen space
 
-### Group Colors
+### Delta Color Scale
 
-Heatmap groups are colored based on the aggregate status of their projects:
-- **Green (up/passed)**: Group has more passing projects or average coverage >= 80%
-- **Red (down/failed)**: Group has more failing projects or average coverage < 80%
-- **Neutral**: No projects with data, or mixed status
+Project tile background colors reflect coverage delta against the latest default-branch baseline:
+
+| Class | Delta range | Color |
+|---|---|---|
+| `delta-pos-3` | +3% or more | Deep green |
+| `delta-pos-2` | +2% | Green |
+| `delta-pos-1` | +1% | Light green |
+| `delta-zero` | 0% | Neutral grey-blue |
+| `delta-neg-1` | -1% | Light red |
+| `delta-neg-2` | -2% | Red |
+| `delta-neg-3` | -3% or worse | Deep red |
+
+New projects (no baseline) receive `delta-zero` styling. Group container backgrounds still use a subtle green/red tint based on overall group status (`heatmap-group-up` / `heatmap-group-down`).
 
 Ungrouped projects appear in an "Ungrouped" panel at the bottom of the heatmap.
+
+## Top Contributors Overlay
+
+The dashboard includes a global Top Contributors view accessible via the "Top Contributors" button.
+
+### Features
+
+- **Global View**: Shows contributor rankings across all projects simultaneously — no project selection required.
+- **Grouped Layout**: Projects are grouped by the same group name used in the heatmap. Groups are sorted alphabetically; ungrouped projects appear last.
+- **Default Branch Scope**: Contributor stats are computed only from runs on each project's configured default branch.
+- **Per-Project Blocks**: Each project shows its name, default branch, and an ordered list of contributors with commit count, run count, average coverage, and latest run timestamp.
+- **Parallel Fetch**: The frontend fetches contributor data for all projects concurrently and renders when all data arrives.
+- **Dynamic Full-Screen Layout**: Uses the same `fitGrid` layout engine as the heatmap — groups fill the entire overlay area with columns and rows computed based on aspect ratio. Relayouts on window resize.
+- **Limit**: Each project shows its top 5 contributors by default (configurable via `limit` query param, server max 25).
 
 ## Exposed Frontend API Proxy Routes
 
@@ -120,6 +143,7 @@ The frontend server exposes unauthenticated GET routes for browser use:
 - `GET /api/projects/{projectId}/branches`
 - `GET /api/projects/{projectId}/coverage-runs`
 - `GET /api/projects/{projectId}/coverage-runs/latest-comparison`
+- `GET /api/projects/{projectId}/contributors`
 
 These are proxied to:
 
@@ -127,3 +151,4 @@ These are proxied to:
 - `GET /v1/projects/{projectId}/branches`
 - `GET /v1/projects/{projectId}/coverage-runs`
 - `GET /v1/projects/{projectId}/coverage-runs/latest-comparison`
+- `GET /v1/projects/{projectId}/contributors`

@@ -160,10 +160,13 @@ CREATE INDEX package_coverages_import_path_idx ON package_coverages(package_impo
 2. Response: `application/json`
 
 ### 6.3 Endpoint Summary
-1. `POST /v1/coverage-runs` - ingest run, auto-create project, return comparison.
-2. `GET /v1/projects/{projectId}` - fetch project metadata.
-3. `GET /v1/projects/{projectId}/coverage-runs` - paginated run history.
-4. `GET /v1/projects/{projectId}/coverage-runs/latest-comparison` - latest run comparison snapshot.
+1. `GET /v1/projects` - list all projects.
+2. `POST /v1/coverage-runs` - ingest run, auto-create project, return comparison.
+3. `GET /v1/projects/{projectId}` - fetch project metadata.
+4. `GET /v1/projects/{projectId}/coverage-runs` - paginated run history.
+5. `GET /v1/projects/{projectId}/coverage-runs/latest-comparison` - latest run comparison snapshot.
+6. `GET /v1/projects/{projectId}/branches` - list distinct branches for a project.
+7. `GET /v1/projects/{projectId}/contributors` - top contributors for the project default branch.
 
 ## 7. Detailed Endpoint Specs
 
@@ -288,6 +291,35 @@ Paginated run list with metadata:
 
 ### 7.4 GET /v1/projects/{projectId}/coverage-runs/latest-comparison
 Returns latest run plus computed comparison against latest default-branch baseline.
+
+### 7.5 GET /v1/projects/{projectId}/contributors
+Returns contributor summaries for the project's default branch only, ordered by distinct commit count descending.
+
+#### Query Params
+1. `limit` (optional, integer, default 10, max 25)
+
+#### Response Body (Example)
+```json
+{
+  "projectId": "5d6e8f6d-f1c8-4f3f-8c93-caf78e7a6a34",
+  "defaultBranch": "main",
+  "contributors": [
+    {
+      "author": "alice",
+      "commitCount": 12,
+      "runCount": 14,
+      "averageCoveragePercent": 82.41,
+      "latestRunTimestamp": "2026-03-28T12:00:00Z"
+    }
+  ]
+}
+```
+
+### 7.6 GET /v1/projects/{projectId}/branches
+Returns distinct branches found in coverage runs for the project.
+
+### 7.7 GET /v1/projects
+Returns a list of all projects with their metadata.
 
 ## 8. Error Model
 

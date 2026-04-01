@@ -12,6 +12,11 @@ const openHeatmap = document.getElementById('openHeatmap');
 const closeHeatmap = document.getElementById('closeHeatmap');
 const heatmapOverlay = document.getElementById('heatmapOverlay');
 const heatmapGrid = document.getElementById('heatmapGrid');
+const openContributors = document.getElementById('openContributors');
+const closeContributors = document.getElementById('closeContributors');
+const contributorsOverlay = document.getElementById('contributorsOverlay');
+const contributorsGrid = document.getElementById('contributorsGrid');
+const contributorsOverlayMeta = document.getElementById('contributorsOverlayMeta');
 const projectSelector = document.getElementById('projectSelector');
 const projectSearchInput = document.getElementById('projectSearchInput');
 const compareCard = document.getElementById('compareCard');
@@ -33,8 +38,10 @@ let selectedProjectId = null;
 let selectedBranch = '';
 let availableBranches = [];
 let heatmapItems = [];
+let contributorItems = [];
 let trendChart = null;
 let heatmapLayoutFrame = 0;
+let contributorsLayoutFrame = 0;
 let trendRequestSequence = 0;
 const sidebarCollapsedKey = 'opencoverage.sidebarCollapsed';
 
@@ -48,6 +55,17 @@ openHeatmap.addEventListener('click', () => {
   toggleHeatmapOverlay(!isOpen);
 });
 closeHeatmap.addEventListener('click', () => toggleHeatmapOverlay(false));
+openContributors.addEventListener('click', async () => {
+  const isOpen = contributorsOverlay.classList.contains('open');
+  if (isOpen) {
+    toggleContributorsOverlay(false);
+    return;
+  }
+
+  toggleContributorsOverlay(true);
+  await loadAllContributors();
+});
+closeContributors.addEventListener('click', () => toggleContributorsOverlay(false));
 projectSelector.addEventListener('change', async (e) => {
   await selectProject(e.target.value);
 });
@@ -58,17 +76,36 @@ branchSelector.addEventListener('change', async (e) => {
   selectedBranch = e.target.value;
   await loadLatestComparison(selectedProjectId);
 });
-window.addEventListener('resize', () => scheduleHeatmapLayout());
+window.addEventListener('resize', () => {
+  scheduleHeatmapLayout();
+  scheduleContributorsLayout();
+});
 
 initializeSidebarState();
 loadAppMeta();
 
 function toggleHeatmapOverlay(open) {
+  if (open) {
+    toggleContributorsOverlay(false);
+  }
   heatmapOverlay.classList.toggle('open', open);
   heatmapOverlay.setAttribute('aria-hidden', String(!open));
 
   if (open) {
     scheduleHeatmapLayout();
+  }
+}
+
+function toggleContributorsOverlay(open) {
+  if (open) {
+    toggleHeatmapOverlay(false);
+  }
+
+  contributorsOverlay.classList.toggle('open', open);
+  contributorsOverlay.setAttribute('aria-hidden', String(!open));
+
+  if (open) {
+    scheduleContributorsLayout();
   }
 }
 
@@ -199,6 +236,130 @@ async function selectProject(projectId) {
   const threshold = Number(project?.globalThresholdPercent);
   await Promise.all([loadRecentRuns(projectId), loadTrendChart(projectId, defaultBranch, branches, threshold)]);
   await loadLatestComparison(projectId);
+}
+
+async function loadAllContributors() {
+  contributorItems = [];
+  contributorsGrid.innerHTML = '<p class="muted">Loading contributors...</p>';
+  contributorsOverlayMeta.textContent = 'All projects · default branch only · ranked by distinct commit count.';
+
+  const sourceProjects = allProjects.length > 0 ? allProjects : projects;
+
+  if (sourceProjects.length === 0) {
+    contributorsGrid.innerHTML = '<p class="muted">No projects loaded yet. Click Refresh first.</p>';
+    return;
+  }
+
+  const items = await Promise.all(
+    sourceProjects.map(async (project) => {
+      try {
+        const url = new URL(`/api/projects/${project.id}/contributors`, window.location.origin);
+        url.searchParams.set('limit', '5');
+        const res = await fetch(url.toString());
+        if (!res.ok) throw new Error(`failed (${res.status})`);
+        const data = await res.json();
+        return { project, contributors: data.contributors || [], defaultBranch: data.defaultBranch || project.defaultBranch || 'main' };
+      } catch (err) {
+        return { project, contributors: [], defaultBranch: project.defaultBranch || 'main', error: err.message };
+      }
+    }),
+  );
+
+  contributorItems = items;
+  renderGroupedContributors();
+  scheduleContributorsLayout();
+}
+
+function renderGroupedContributors() {
+  contributorsGrid.innerHTML = '';
+
+  if (contributorItems.length === 0) {
+    contributorsGrid.innerHTML = '<p class="muted">No contributor data available.</p>';
+    return;
+  }
+
+  const grouped = {};
+  const ungroupedItems = [];
+
+  for (const item of contributorItems) {
+    const groupName = item.project.group || null;
+    if (groupName) {
+      if (!grouped[groupName]) grouped[groupName] = [];
+      grouped[groupName].push(item);
+    } else {
+      ungroupedItems.push(item);
+    }
+  }
+
+  const sections = Object.keys(grouped)
+    .sort()
+    .map((name) => ({ name, items: grouped[name] }));
+
+  if (ungroupedItems.length > 0) {
+    sections.push({ name: 'Ungrouped', items: ungroupedItems });
+  }
+
+  for (const section of sections) {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'contributors-group';
+
+    const groupHeader = document.createElement('h4');
+    groupHeader.className = 'contributors-group-header';
+    groupHeader.textContent = section.name;
+    groupEl.appendChild(groupHeader);
+
+    const groupBody = document.createElement('div');
+    groupBody.className = 'contributors-group-body';
+
+    for (const item of section.items) {
+      groupBody.appendChild(buildProjectContributorBlock(item));
+    }
+
+    groupEl.appendChild(groupBody);
+    contributorsGrid.appendChild(groupEl);
+  }
+}
+
+function buildProjectContributorBlock(item) {
+  const block = document.createElement('div');
+  block.className = 'contributor-project-block';
+
+  const projectName = item.project.name || item.project.projectKey;
+  const branchLabel = item.defaultBranch;
+
+  const header = document.createElement('div');
+  header.className = 'contributor-project-header';
+  header.innerHTML = `
+    <span class="contributor-project-name">${escapeHtml(projectName)}</span>
+    <span class="contributor-project-branch">${escapeHtml(branchLabel)}</span>
+  `;
+  block.appendChild(header);
+
+  if (item.error || item.contributors.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'contributor-empty';
+    empty.textContent = item.error ? 'Failed to load.' : 'No data yet.';
+    block.appendChild(empty);
+    return block;
+  }
+
+  const list = document.createElement('ol');
+  list.className = 'contributor-list';
+
+  item.contributors.forEach((contributor) => {
+    const row = document.createElement('li');
+    row.className = 'contributor-row';
+    row.innerHTML = `
+      <span class="contributor-row-author">${escapeHtml(contributor.author || 'unknown')}</span>
+      <span class="contributor-row-stat" title="Distinct commits">${contributor.commitCount} commits</span>
+      <span class="contributor-row-stat" title="Average coverage">${pct(contributor.averageCoveragePercent)}</span>
+      <span class="contributor-row-date">${formatDateTime(contributor.latestRunTimestamp)}</span>
+    `;
+    list.appendChild(row);
+  });
+
+  block.appendChild(list);
+  return block;
 }
 
 function getProjectById(projectId) {
@@ -508,6 +669,43 @@ function tileSizeForCoverage(current) {
   if (current >= 70) return { col: 4, row: 3 };
   if (current >= 60) return { col: 4, row: 2 };
   return { col: 3, row: 2 };
+}
+
+function scheduleContributorsLayout() {
+  if (contributorsLayoutFrame !== 0) {
+    cancelAnimationFrame(contributorsLayoutFrame);
+  }
+  contributorsLayoutFrame = requestAnimationFrame(() => {
+    contributorsLayoutFrame = 0;
+    layoutContributorGroups();
+  });
+}
+
+function layoutContributorGroups() {
+  const groups = Array.from(contributorsGrid.querySelectorAll('.contributors-group'));
+  if (groups.length === 0) {
+    contributorsGrid.style.removeProperty('--contributors-group-columns');
+    contributorsGrid.style.removeProperty('--contributors-group-rows');
+    return;
+  }
+
+  const width = contributorsGrid.clientWidth;
+  const height = contributorsGrid.clientHeight;
+  if (!width || !height) {
+    return;
+  }
+
+  const layout = fitGrid(groups.length, width / Math.max(height, 1));
+  contributorsGrid.style.setProperty('--contributors-group-columns', String(layout.columns));
+  contributorsGrid.style.setProperty('--contributors-group-rows', String(layout.rows));
+
+  const remainder = groups.length % layout.columns;
+  groups.forEach((group, index) => {
+    group.style.gridColumn = '';
+    if (remainder !== 0 && index === groups.length - 1) {
+      group.style.gridColumn = `span ${layout.columns - remainder + 1}`;
+    }
+  });
 }
 
 function scheduleHeatmapLayout() {
@@ -932,6 +1130,22 @@ function signedPct(v) {
   const n = Number(v);
   if (Number.isNaN(n)) return '-';
   return `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
+}
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString();
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function directionClass(direction) {

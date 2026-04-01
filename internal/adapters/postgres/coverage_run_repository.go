@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arxdsilva/opencoverage/internal/application"
 	"github.com/arxdsilva/opencoverage/internal/domain"
 
 	"github.com/jackc/pgx/v5"
@@ -209,4 +210,50 @@ func (r *CoverageRunRepository) ListBranchesByProject(ctx context.Context, proje
 	}
 
 	return branches, nil
+}
+
+func (r *CoverageRunRepository) ListContributorsByProjectAndBranch(ctx context.Context, projectID string, branch string, limit int) ([]application.ContributorSummary, error) {
+	q := getQuerier(ctx, r.pool)
+	if limit <= 0 {
+		limit = 10
+	}
+
+	rows, err := q.Query(ctx, `
+		SELECT
+			COALESCE(NULLIF(author, ''), 'unknown') AS author,
+			COUNT(DISTINCT commit_sha) AS commit_count,
+			COUNT(*) AS run_count,
+			AVG(total_coverage_percent)::float8 AS average_coverage_percent,
+			MAX(run_timestamp) AS latest_run_timestamp
+		FROM coverage_runs
+		WHERE project_id = $1 AND branch = $2
+		GROUP BY COALESCE(NULLIF(author, ''), 'unknown')
+		ORDER BY commit_count DESC, run_count DESC, latest_run_timestamp DESC, author ASC
+		LIMIT $3
+	`, projectID, branch, limit)
+	if err != nil {
+		return nil, fmt.Errorf("query contributors: %w", err)
+	}
+	defer rows.Close()
+
+	contributors := make([]application.ContributorSummary, 0)
+	for rows.Next() {
+		var contributor application.ContributorSummary
+		if err := rows.Scan(
+			&contributor.Author,
+			&contributor.CommitCount,
+			&contributor.RunCount,
+			&contributor.AverageCoveragePercent,
+			&contributor.LatestRunTimestamp,
+		); err != nil {
+			return nil, fmt.Errorf("scan contributor: %w", err)
+		}
+		contributors = append(contributors, contributor)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate contributor rows: %w", err)
+	}
+
+	return contributors, nil
 }

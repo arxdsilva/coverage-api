@@ -97,6 +97,8 @@ Main endpoints:
 - `GET /v1/projects/{projectId}`
 - `GET /v1/projects/{projectId}/coverage-runs`
 - `GET /v1/projects/{projectId}/coverage-runs/latest-comparison`
+- `GET /v1/projects/{projectId}/branches`
+- `GET /v1/projects/{projectId}/contributors`
 
 For full API contract details, see [SPEC.md](SPEC.md).
 
@@ -215,6 +217,8 @@ Frontend highlights:
 - Project overview includes a multi-branch coverage trend chart.
 - The trend view overlays the default branch with all discovered branches for the selected project.
 - The branch selector is used for latest-comparison details, not for filtering the trend chart.
+- Heatmap overlay shows all projects grouped by team, with tiles color-coded on a -3% to +3% delta scale (green = improved, red = regressed). A scale legend is displayed in the overlay header.
+- Top Contributors overlay shows the leading commit contributors per project across all teams, grouped the same way as the heatmap.
 
 ## Typical Integration Flow
 

@@ -18,16 +18,9 @@ type CoverageRunRepository interface {
 	Create(ctx context.Context, run domain.CoverageRun) (domain.CoverageRun, error)
 	GetLatestByProjectAndBranch(ctx context.Context, projectID string, branch string) (domain.CoverageRun, error)
 	GetLatestByProject(ctx context.Context, projectID string) (domain.CoverageRun, error)
-	ListByProject(
-		ctx context.Context,
-		projectID string,
-		branch string,
-		from *time.Time,
-		to *time.Time,
-		page int,
-		pageSize int,
-	) ([]domain.CoverageRun, int, error)
+	ListByProject(ctx context.Context, projectID string, branch string, from *time.Time, to *time.Time, page int, pageSize int) ([]domain.CoverageRun, int, error)
 	ListBranchesByProject(ctx context.Context, projectID string) ([]string, error)
+	ListContributorsByProjectAndBranch(ctx context.Context, projectID string, branch string, limit int) ([]ContributorSummary, error)
 }
 
 type PackageCoverageRepository interface {

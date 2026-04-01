@@ -21,6 +21,7 @@ type Handler struct {
 	listRuns         *application.ListCoverageRunsUseCase
 	latestComparison *application.GetLatestComparisonUseCase
 	listBranches     *application.ListBranchesUseCase
+	listContributors *application.ListContributorsUseCase
 }
 
 func NewHandler(
@@ -30,6 +31,7 @@ func NewHandler(
 	listRuns *application.ListCoverageRunsUseCase,
 	latestComparison *application.GetLatestComparisonUseCase,
 	listBranches *application.ListBranchesUseCase,
+	listContributors *application.ListContributorsUseCase,
 ) *Handler {
 	return &Handler{
 		ingest:           ingest,
@@ -38,6 +40,7 @@ func NewHandler(
 		listRuns:         listRuns,
 		latestComparison: latestComparison,
 		listBranches:     listBranches,
+		listContributors: listContributors,
 	}
 }
 
@@ -200,6 +203,27 @@ func (h *Handler) ListBranches(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	slog.Info("operation", "name", "list_branches", "stage", "success", "request_id", requestID, "project_id", projectID, "count", len(out.Branches), "duration_ms", time.Since(start).Milliseconds())
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (h *Handler) ListContributors(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	requestID := chiMiddleware.GetReqID(r.Context())
+	projectID := chi.URLParam(r, "projectId")
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	slog.Info("operation", "name", "list_contributors", "stage", "start", "request_id", requestID, "project_id", projectID, "limit", limit)
+
+	out, err := h.listContributors.Execute(r.Context(), application.ListContributorsInput{
+		ProjectID: projectID,
+		Limit:     limit,
+	})
+	if err != nil {
+		slog.Error("operation", "name", "list_contributors", "stage", "execute_failed", "request_id", requestID, "project_id", projectID, "error", err)
+		writeAppError(w, err)
+		return
+	}
+
+	slog.Info("operation", "name", "list_contributors", "stage", "success", "request_id", requestID, "project_id", projectID, "items", len(out.Contributors), "default_branch", out.DefaultBranch, "duration_ms", time.Since(start).Milliseconds())
 	writeJSON(w, http.StatusOK, out)
 }
 

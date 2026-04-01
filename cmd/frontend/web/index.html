@@ -20,6 +20,7 @@
           <h1>Projects</h1>
           <button id="refreshProjects" class="btn">Refresh</button>
           <button id="openHeatmap" class="btn">Open Heatmap</button>
+          <button id="openContributors" class="btn">Top Contributors</button>
         </div>
         <article class="card project-selector-card">
           <div class="project-selector-head">
@@ -182,6 +183,19 @@
               </div>
             </div>
             <div id="heatmapGrid" class="heatmap-grid heatmap-overlay-grid"></div>
+          </article>
+        </section>
+
+        <section id="contributorsOverlay" class="contributors-overlay" aria-hidden="true">
+          <article class="card contributors-overlay-card">
+            <div class="contributors-overlay-head">
+              <div class="table-head contributors-head">
+                <h3>Top Contributors</h3>
+                <p id="contributorsOverlayMeta" class="muted">All projects &middot; default branch only &middot; ranked by distinct commit count.</p>
+              </div>
+              <button id="closeContributors" class="btn">Close</button>
+            </div>
+            <div id="contributorsGrid" class="contributors-grid"></div>
           </article>
         </section>
       </section>
