@@ -69,7 +69,6 @@ func APIKeyMiddleware(auth application.APIKeyAuthenticator, headerName string) f
 						"path", r.URL.Path,
 						"result", "invalid_api_key",
 						"request_id", requestID,
-						"api_key", key,
 						"wanted_api_key", auth.WantedAPIKey(),
 					)
 					writeError(w, http.StatusUnauthorized, &application.AppError{
