@@ -33,7 +33,7 @@ help:
 	@echo "  make run                - Run API locally"
 	@echo "  make frontend-run       - Run frontend dashboard locally on :8090"
 	@echo "  make frontend-dev       - Run API and frontend together (local)"
-	@echo "  make compose-up         - Start db + seed + api + frontend via docker compose"
+	@echo "  make compose-up         - Start db + migrate + seed + api + frontend via docker compose"
 	@echo "                            Example with busy local 5432: DB_PORT=5433 make compose-up"
 	@echo "                            If upgrading Postgres major versions: make compose-down then make compose-up"
 	@echo "  make compose-down       - Stop docker compose services"

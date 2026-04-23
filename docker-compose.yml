@@ -17,6 +17,28 @@ services:
       timeout: 5s
       retries: 10
 
+  migrate:
+    image: golang:1.25-alpine
+    container_name: coverage-api-migrate
+    working_dir: /app
+    volumes:
+      - ./:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://coverage:coverage@db:5432/coverage?sslmode=disable
+    command:
+      - go
+      - run
+      - github.com/pressly/goose/v3/cmd/goose@latest
+      - -dir
+      - /app/migrations
+      - postgres
+      - postgres://coverage:coverage@db:5432/coverage?sslmode=disable
+      - up
+    restart: "no"
+
   # DEV ONLY: remove this service before production deployment.
   seed:
     image: postgres:18
@@ -25,8 +47,8 @@ services:
     volumes:
       - ./:/app
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       PGPASSWORD: coverage
     entrypoint: ["sh", "-c"]
@@ -47,8 +69,8 @@ services:
       DATABASE_URL: postgres://coverage:coverage@db:5432/coverage?sslmode=disable
       SHUTDOWN_TIMEOUT_SECONDS: "10"
     depends_on:
-      db:
-        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
     command: ["go", "run", "./cmd/api"]
     ports:
       - "8080:8080"
