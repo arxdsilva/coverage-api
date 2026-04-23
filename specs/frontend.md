@@ -99,13 +99,13 @@ The dashboard includes an interactive heatmap view of all projects accessible vi
 
 - **Group Organization**: Projects with an assigned group appear as balanced panels within the heatmap overlay
 - **Responsive Layout**: Groups automatically reflow to fill the visible overlay area as panels
-- **Color Coding**: Individual project tiles are color-coded by coverage delta on a -3% to +3% scale. Seven CSS classes (`delta-neg-3` through `delta-pos-3`) map to a red-to-green gradient — red shades for regression, neutral grey for no change, green shades for improvement. A legend strip in the overlay header shows the full scale at a glance.
+- **Color Coding**: Individual project tiles keep the existing delta coloring model and CSS classes. The only change is the delta source: it is now computed from the two most recent commits on the `main` branch only. The current seven classes (`delta-neg-3` through `delta-pos-3`) still map onto the same -3% to +3% red-to-green gradient — red shades for regression, neutral grey for no change, green shades for improvement. A legend strip in the overlay header shows the full scale at a glance.
 - **Per-Group Tiles**: Each group contains project tiles sized to fill the group's allocated space
 - **Real-time Relayout**: Groups reflow on window resize to maintain optimal use of screen space
 
 ### Delta Color Scale
 
-Project tile background colors reflect coverage delta against the latest default-branch baseline:
+Project tile background colors keep the same thresholds and visual meanings as before, but the delta input is now the difference between the latest `main` branch commit and the immediately previous `main` branch commit. The heatmap does not compare against feature branches, pull request branches, or any older baseline outside that most recent two-commit window.
 
 | Class | Delta range | Color |
 |---|---|---|
@@ -117,7 +117,7 @@ Project tile background colors reflect coverage delta against the latest default
 | `delta-neg-2` | -2% | Red |
 | `delta-neg-3` | -3% or worse | Deep red |
 
-New projects (no baseline) receive `delta-zero` styling. Group container backgrounds still use a subtle green/red tint based on overall group status (`heatmap-group-up` / `heatmap-group-down`).
+Projects without at least two `main` branch commits to compare receive `delta-zero` styling. Group container backgrounds still use a subtle green/red tint based on the same latest-vs-previous `main` branch comparison (`heatmap-group-up` / `heatmap-group-down`).
 
 Ungrouped projects appear in an "Ungrouped" panel at the bottom of the heatmap.
 
