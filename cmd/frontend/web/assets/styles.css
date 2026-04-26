@@ -398,6 +398,7 @@ h3 {
   font-size: 10px;
   color: var(--text-soft);
   font-family: "JetBrains Mono", monospace;
+  white-space: nowrap;
 }
 
 /* Integration Heatmap */
