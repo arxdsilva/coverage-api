@@ -61,7 +61,7 @@ projectSearchInput.addEventListener('input', (e) => {
   filterAndRenderProjects(e.target.value);
 });
 integrationBranchFilter.addEventListener('change', async () => {
-  await loadIntegrationRuns(selectedProjectId);
+  await loadIntegrationScreen(selectedProjectId, { preferredRunId: null });
 });
 integrationStatusFilter.addEventListener('change', async () => {
   await loadIntegrationRuns(selectedProjectId);
@@ -400,20 +400,34 @@ function filterAndRenderProjects(searchTerm) {
   renderProjectSelector();
 }
 
-function renderIntegrationBranchFilter(project) {
+function renderIntegrationBranchFilter(project, branches = []) {
   const selectedValue = integrationBranchFilter.value;
-  integrationBranchFilter.innerHTML = '<option value="">All branches</option>';
+  integrationBranchFilter.innerHTML = '';
 
   const defaultBranch = project?.defaultBranch || 'main';
-  const branches = [defaultBranch, 'develop'];
-  for (const branch of branches) {
+  const orderedBranches = Array.from(new Set([defaultBranch, ...branches.filter(Boolean)]));
+  for (const branch of orderedBranches) {
     const option = document.createElement('option');
     option.value = branch;
     option.textContent = branch;
     integrationBranchFilter.appendChild(option);
   }
 
-  integrationBranchFilter.value = branches.includes(selectedValue) ? selectedValue : '';
+  integrationBranchFilter.value = orderedBranches.includes(selectedValue)
+    ? selectedValue
+    : (orderedBranches[0] || defaultBranch);
+}
+
+async function loadIntegrationBranches(projectId, defaultBranch) {
+  try {
+    const res = await fetch(`/api/projects/${projectId}/branches`);
+    if (!res.ok) throw new Error(`failed to load branches (${res.status})`);
+    const data = await res.json();
+    const branches = Array.isArray(data.branches) ? data.branches.filter(Boolean) : [];
+    return Array.from(new Set([defaultBranch, ...branches]));
+  } catch (err) {
+    return [defaultBranch];
+  }
 }
 
 async function selectProject(projectId, options = {}) {
@@ -426,7 +440,9 @@ async function selectProject(projectId, options = {}) {
   integrationScreenProjectTitle.textContent = project?.name || project?.projectKey || 'Project';
   integrationScreenProjectMeta.textContent = `${project?.projectKey || ''} - default branch: ${project?.defaultBranch || 'main'}`;
 
-  renderIntegrationBranchFilter(project);
+  const defaultBranch = project?.defaultBranch || 'main';
+  const branches = await loadIntegrationBranches(projectId, defaultBranch);
+  renderIntegrationBranchFilter(project, branches);
   await loadIntegrationScreen(projectId, { preferredRunId });
 }
 
@@ -445,7 +461,12 @@ async function loadIntegrationScreen(projectId, options = {}) {
 
 async function loadIntegrationLatestComparison(projectId) {
   try {
-    const res = await fetch(`/api/projects/${projectId}/integration-test-runs/latest-comparison`);
+    const url = new URL(`/api/projects/${projectId}/integration-test-runs/latest-comparison`, window.location.origin);
+    if (integrationBranchFilter.value) {
+      url.searchParams.set('branch', integrationBranchFilter.value);
+    }
+
+    const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`failed to load integration comparison (${res.status})`);
     const data = await res.json();
 
@@ -476,9 +497,9 @@ async function loadIntegrationRuns(projectId, preferredRunId = null) {
     const url = new URL(`/api/projects/${projectId}/integration-test-runs`, window.location.origin);
     url.searchParams.set('page', '1');
     url.searchParams.set('pageSize', '20');
-    if (integrationBranchFilter.value) {
-      url.searchParams.set('branch', integrationBranchFilter.value);
-    }
+    const project = projects.find((p) => p.id === projectId);
+    const selectedBranch = integrationBranchFilter.value || project?.defaultBranch || 'main';
+    url.searchParams.set('branch', selectedBranch);
     if (integrationStatusFilter.value) {
       url.searchParams.set('status', integrationStatusFilter.value);
     }
