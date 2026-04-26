@@ -566,21 +566,24 @@ async function loadIntegrationScreen(projectId, options = {}) {
 
 async function loadIntegrationLatestComparison(projectId) {
   try {
+    const requestedBranch = integrationBranchFilter.value || '';
     const url = new URL(`/api/projects/${projectId}/integration-test-runs/latest-comparison`, window.location.origin);
-    if (integrationBranchFilter.value) {
-      url.searchParams.set('branch', integrationBranchFilter.value);
+    if (requestedBranch) {
+      url.searchParams.set('branch', requestedBranch);
     }
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`failed to load integration comparison (${res.status})`);
     const data = await res.json();
 
-    integrationStatus.textContent = (data.run?.status || '-').toUpperCase();
-    integrationStatus.className = `value ${data.run?.status === 'passed' ? 'passed' : 'failed'}`;
-    integrationFailedSpecsCount.textContent = String(data.run?.failedSpecs ?? '-');
+    // Ignore stale responses when project/branch changed while request was in-flight.
+    if (projectId !== selectedProjectId) return;
+    if ((integrationBranchFilter.value || '') !== requestedBranch) return;
+
     integrationDelta.textContent = data.comparison?.deltaPercent == null ? '-' : signedPct(data.comparison.deltaPercent);
     integrationDuration.textContent = data.run?.durationMs == null ? '-' : `${Math.round(data.run.durationMs / 1000)}s`;
   } catch (err) {
+    if (projectId !== selectedProjectId) return;
     integrationStatus.textContent = 'ERROR';
     integrationStatus.className = 'value failed';
     integrationPassRate.textContent = '-';
@@ -603,15 +606,23 @@ async function loadIntegrationRuns(projectId, preferredRunId = null) {
     url.searchParams.set('pageSize', '20');
     const project = projects.find((p) => p.id === projectId);
     const selectedBranch = integrationBranchFilter.value || project?.defaultBranch || 'main';
+    const selectedStatus = integrationStatusFilter.value || '';
     url.searchParams.set('branch', selectedBranch);
-    if (integrationStatusFilter.value) {
-      url.searchParams.set('status', integrationStatusFilter.value);
+    if (selectedStatus) {
+      url.searchParams.set('status', selectedStatus);
     }
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`failed to load integration runs (${res.status})`);
     const data = await res.json();
     const items = data.items || [];
+
+    // Ignore stale responses when project/filters changed while request was in-flight.
+    if (projectId !== selectedProjectId) return;
+    const currentProject = projects.find((p) => p.id === projectId);
+    const currentBranch = integrationBranchFilter.value || currentProject?.defaultBranch || 'main';
+    const currentStatus = integrationStatusFilter.value || '';
+    if (currentBranch !== selectedBranch || currentStatus !== selectedStatus) return;
 
     currentIntegrationRunItems = items;
     const passedRuns = items.filter((run) => run.status === 'passed').length;
@@ -626,11 +637,19 @@ async function loadIntegrationRuns(projectId, preferredRunId = null) {
 
     if (items.length === 0) {
       selectedIntegrationRunId = null;
+      integrationStatus.textContent = '-';
+      integrationStatus.className = 'value';
+      integrationFailedSpecsCount.textContent = '-';
       integrationRunChain.innerHTML = '<p class="muted">No integration runs found for current filters.</p>';
       integrationRunsBody.innerHTML = '<tr><td colspan="7" class="muted">No integration runs found.</td></tr>';
       integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">No run selected.</td></tr>';
       return;
     }
+
+    const latestRun = items[0];
+    integrationStatus.textContent = (latestRun.status || '-').toUpperCase();
+    integrationStatus.className = `value ${latestRun.status === 'passed' ? 'passed' : 'failed'}`;
+    integrationFailedSpecsCount.textContent = String(latestRun.failedSpecs ?? '-');
 
     const nextSelectedRunId = retainedRunId && items.some((run) => run.id === retainedRunId)
       ? retainedRunId
