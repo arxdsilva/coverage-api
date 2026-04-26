@@ -51,6 +51,7 @@ const allGroupsFilterValue = '__all__';
 const ungroupedFilterValue = '__ungrouped__';
 const sidebarCollapsedKey = 'opencoverage.sidebarCollapsed';
 const homeAutoRefreshStorageKey = 'opencoverage.autoRefresh.home';
+const homeDefaultAutoRefreshInterval = '60s';
 const homeAutoRefreshIntervals = Object.freeze({
   off: 0,
   '15s': 15000,
@@ -129,14 +130,18 @@ function getQueryParam(name) {
 
 function initializeHomeAutoRefreshControl() {
   const persisted = window.localStorage.getItem(homeAutoRefreshStorageKey);
-  const nextValue = Object.prototype.hasOwnProperty.call(homeAutoRefreshIntervals, persisted) ? persisted : 'off';
+  const nextValue = Object.prototype.hasOwnProperty.call(homeAutoRefreshIntervals, persisted)
+    ? persisted
+    : homeDefaultAutoRefreshInterval;
   autoRefreshInterval.value = nextValue;
   updateHomeAutoRefreshStatus();
 }
 
 function getHomeAutoRefreshIntervalValue() {
   const selectedValue = autoRefreshInterval.value;
-  return Object.prototype.hasOwnProperty.call(homeAutoRefreshIntervals, selectedValue) ? selectedValue : 'off';
+  return Object.prototype.hasOwnProperty.call(homeAutoRefreshIntervals, selectedValue)
+    ? selectedValue
+    : homeDefaultAutoRefreshInterval;
 }
 
 function getHomeAutoRefreshIntervalMs() {
@@ -144,7 +149,9 @@ function getHomeAutoRefreshIntervalMs() {
 }
 
 function persistHomeAutoRefreshInterval(value) {
-  const nextValue = Object.prototype.hasOwnProperty.call(homeAutoRefreshIntervals, value) ? value : 'off';
+  const nextValue = Object.prototype.hasOwnProperty.call(homeAutoRefreshIntervals, value)
+    ? value
+    : homeDefaultAutoRefreshInterval;
   window.localStorage.setItem(homeAutoRefreshStorageKey, nextValue);
 }
 

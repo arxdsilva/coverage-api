@@ -37,6 +37,7 @@ const allGroupsFilterValue = '__all__';
 const ungroupedFilterValue = '__ungrouped__';
 const sidebarCollapsedKey = 'opencoverage.sidebarCollapsed.integration';
 const integrationAutoRefreshStorageKey = 'opencoverage.autoRefresh.integration';
+const integrationDefaultAutoRefreshInterval = '60s';
 const integrationAutoRefreshIntervals = Object.freeze({
   off: 0,
   '15s': 15000,
@@ -128,14 +129,18 @@ function getQueryParam(name) {
 
 function initializeIntegrationAutoRefreshControl() {
   const persisted = window.localStorage.getItem(integrationAutoRefreshStorageKey);
-  const nextValue = Object.prototype.hasOwnProperty.call(integrationAutoRefreshIntervals, persisted) ? persisted : 'off';
+  const nextValue = Object.prototype.hasOwnProperty.call(integrationAutoRefreshIntervals, persisted)
+    ? persisted
+    : integrationDefaultAutoRefreshInterval;
   integrationAutoRefreshInterval.value = nextValue;
   updateIntegrationAutoRefreshStatus();
 }
 
 function getIntegrationAutoRefreshIntervalValue() {
   const selectedValue = integrationAutoRefreshInterval.value;
-  return Object.prototype.hasOwnProperty.call(integrationAutoRefreshIntervals, selectedValue) ? selectedValue : 'off';
+  return Object.prototype.hasOwnProperty.call(integrationAutoRefreshIntervals, selectedValue)
+    ? selectedValue
+    : integrationDefaultAutoRefreshInterval;
 }
 
 function getIntegrationAutoRefreshIntervalMs() {
@@ -143,7 +148,9 @@ function getIntegrationAutoRefreshIntervalMs() {
 }
 
 function persistIntegrationAutoRefreshInterval(value) {
-  const nextValue = Object.prototype.hasOwnProperty.call(integrationAutoRefreshIntervals, value) ? value : 'off';
+  const nextValue = Object.prototype.hasOwnProperty.call(integrationAutoRefreshIntervals, value)
+    ? value
+    : integrationDefaultAutoRefreshInterval;
   window.localStorage.setItem(integrationAutoRefreshStorageKey, nextValue);
 }
 
