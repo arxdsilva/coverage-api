@@ -54,6 +54,21 @@ Navigation behavior:
 4. Browser back/forward navigation between `/` and `/integration` is supported.
 5. Navigation works even when JavaScript fails to initialize because these controls are real links (`<a href=...>`).
 
+## URL Query Parameters
+
+Both the home page and integration screen support opening overlays via URL query parameters:
+
+### `?heatmap=open`
+
+Opens the heatmap overlay on page load.
+
+**Examples:**
+
+- Home page with heatmap open: `http://localhost:8090/?heatmap=open`
+- Integration screen with heatmap open: `http://localhost:8090/integration?heatmap=open`
+
+This allows deep linking to either heatmap visualization directly.
+
 Integration route behavior:
 
 1. The integration dashboard includes a `Run Chain` graphic rendered from the current run history query.

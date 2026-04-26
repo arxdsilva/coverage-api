@@ -84,6 +84,11 @@ window.addEventListener('resize', () => {
 initializeSidebarState();
 loadAppMeta();
 
+function getQueryParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+
 function toggleHeatmapOverlay(open) {
   if (open) {
     toggleContributorsOverlay(false);
@@ -1130,4 +1135,10 @@ function directionClass(direction) {
   return 'equal';
 }
 
-loadProjects();
+(async () => {
+  await loadProjects();
+  if (getQueryParam('heatmap') === 'open') {
+    toggleHeatmapOverlay(true);
+    await loadHeatmap();
+  }
+})();

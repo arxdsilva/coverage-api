@@ -70,7 +70,19 @@ toggleSidebar.addEventListener('click', () => {
 });
 
 initializeSidebarState();
-loadProjects();
+
+(async () => {
+  await loadProjects();
+  if (getQueryParam('heatmap') === 'open') {
+    toggleIntegrationHeatmapOverlay(true);
+    await loadHeatmap();
+  }
+})();
+
+function getQueryParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
 
 function toggleIntegrationHeatmapOverlay(open) {
   integrationHeatmapOverlay.classList.toggle('open', open);
