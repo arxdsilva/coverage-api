@@ -47,7 +47,7 @@ func main() {
 	mux.Handle("/assets/", http.StripPrefix("/", http.FileServer(http.FS(frontendFS))))
 	mux.HandleFunc("/api/app-meta", appMetaHandler(cfg))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
+		if r.URL.Path != "/" && r.URL.Path != "/integration" {
 			http.NotFound(w, r)
 			return
 		}

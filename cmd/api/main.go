@@ -56,6 +56,8 @@ func main() {
 	projectRepo := postgres.NewProjectRepository(pool)
 	runRepo := postgres.NewCoverageRunRepository(pool)
 	packageRepo := postgres.NewPackageCoverageRepository(pool)
+	integrationRunRepo := postgres.NewIntegrationTestRunRepository(pool)
+	integrationSpecRepo := postgres.NewIntegrationSpecResultRepository(pool)
 	txManager := postgres.NewTxManager(pool)
 	authenticator := auth.NewEnvAPIKeyAuthenticator(cfg.APIKeySecret)
 
@@ -63,14 +65,30 @@ func main() {
 	idGenerator := idgen.NewUUIDGenerator()
 
 	ingestUC := application.NewIngestCoverageRunUseCase(projectRepo, runRepo, packageRepo, txManager, idGenerator, clockAdapter)
+	ingestIntegrationUC := application.NewIngestIntegrationRunUseCase(projectRepo, integrationRunRepo, integrationSpecRepo, txManager, idGenerator, clockAdapter)
 	listProjectsUC := application.NewListProjectsUseCase(projectRepo)
 	getProjectUC := application.NewGetProjectUseCase(projectRepo)
 	listRunsUC := application.NewListCoverageRunsUseCase(runRepo)
+	listIntegrationRunsUC := application.NewListIntegrationRunsUseCase(integrationRunRepo)
 	latestComparisonUC := application.NewGetLatestComparisonUseCase(projectRepo, runRepo, packageRepo)
+	latestIntegrationComparisonUC := application.NewGetLatestIntegrationComparisonUseCase(projectRepo, integrationRunRepo, integrationSpecRepo)
+	getIntegrationRunUC := application.NewGetIntegrationRunUseCase(integrationRunRepo, integrationSpecRepo)
 	listBranchesUC := application.NewListBranchesUseCase(runRepo)
 	listContributorsUC := application.NewListContributorsUseCase(projectRepo, runRepo)
 
-	handler := httpadapter.NewHandler(ingestUC, listProjectsUC, getProjectUC, listRunsUC, latestComparisonUC, listBranchesUC, listContributorsUC)
+	handler := httpadapter.NewHandler(
+		ingestUC,
+		ingestIntegrationUC,
+		listProjectsUC,
+		getProjectUC,
+		listRunsUC,
+		listIntegrationRunsUC,
+		latestComparisonUC,
+		latestIntegrationComparisonUC,
+		getIntegrationRunUC,
+		listBranchesUC,
+		listContributorsUC,
+	)
 	router := httpadapter.NewRouter(handler, authenticator, cfg.APIKeyHeader)
 
 	server := &http.Server{

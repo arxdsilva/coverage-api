@@ -28,9 +28,13 @@ func NewRouter(handler *Handler, auth application.APIKeyAuthenticator, apiKeyHea
 
 		v1.Get("/projects", handler.ListProjects)
 		v1.Post("/coverage-runs", handler.IngestCoverageRun)
+		v1.Post("/integration-test-runs", handler.IngestIntegrationRun)
 		v1.Get("/projects/{projectId}", handler.GetProject)
 		v1.Get("/projects/{projectId}/coverage-runs", handler.ListCoverageRuns)
 		v1.Get("/projects/{projectId}/coverage-runs/latest-comparison", handler.GetLatestComparison)
+		v1.Get("/projects/{projectId}/integration-test-runs", handler.ListIntegrationRuns)
+		v1.Get("/projects/{projectId}/integration-test-runs/latest-comparison", handler.GetLatestIntegrationComparison)
+		v1.Get("/projects/{projectId}/integration-test-runs/{runId}", handler.GetIntegrationRun)
 		v1.Get("/projects/{projectId}/branches", handler.ListBranches)
 		v1.Get("/projects/{projectId}/contributors", handler.ListContributors)
 	})

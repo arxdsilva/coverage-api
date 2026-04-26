@@ -103,3 +103,98 @@ VALUES
   ('ba000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003', 'github.com/acme/search/internal/index', 84.00),
   ('ba000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000004', 'github.com/acme/search/internal/ranking', 83.60)
 ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO integration_test_runs (
+  id, project_id, branch, commit_sha, author, trigger_type, run_timestamp,
+  ginkgo_version, suite_description, suite_path, total_specs, passed_specs,
+  failed_specs, skipped_specs, flaked_specs, pending_specs, interrupted,
+  timed_out, duration_ms, status
+)
+VALUES
+  ('c1000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'main', 'ca11it01', 'dev-seed', 'push', NOW() - INTERVAL '2 day', '2.21.0', 'coverage-api integration suite', './integration', 12, 11, 1, 0, 0, 0, FALSE, FALSE, 18203, 'failed'),
+  ('c1000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'feature/rbac', 'ca11it02', 'dev-seed', 'pr', NOW() - INTERVAL '20 hour', '2.21.0', 'coverage-api integration suite', './integration', 10, 10, 0, 0, 0, 0, FALSE, FALSE, 14110, 'passed'),
+
+  ('c2000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'main', 'payit001', 'dev-seed', 'push', NOW() - INTERVAL '2 day', '2.21.0', 'payments integration suite', './integration', 25, 24, 0, 1, 0, 0, FALSE, FALSE, 26350, 'passed'),
+  ('c2000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'feature/fraud-check', 'payit002', 'dev-seed', 'pr', NOW() - INTERVAL '16 hour', '2.21.0', 'payments integration suite', './integration', 18, 16, 1, 0, 1, 0, FALSE, FALSE, 21900, 'failed'),
+
+  ('c3000000-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333', 'main', 'webit001', 'dev-seed', 'push', NOW() - INTERVAL '30 hour', '2.21.0', 'webapp integration suite', './integration', 20, 18, 1, 0, 0, 1, FALSE, FALSE, 24520, 'failed'),
+  ('c7000000-0000-0000-0000-000000000001', '77777777-7777-7777-7777-777777777777', 'main', 'ordit001', 'dev-seed', 'push', NOW() - INTERVAL '12 hour', '2.21.0', 'orders integration suite', './integration', 14, 14, 0, 0, 0, 0, FALSE, FALSE, 17640, 'passed')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO integration_spec_results (
+  id, integration_run_id, spec_path, leaf_node_text, state, duration_ms,
+  failure_message, failure_location_file, failure_location_line
+)
+VALUES
+  ('d1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'POST /v1/coverage-runs > rejects invalid api key', 'rejects invalid api key', 'failed', 53, 'expected 401, got 500', 'integration/auth_test.go', 84),
+  ('d1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000001', 'POST /v1/coverage-runs > creates project on first ingest', 'creates project on first ingest', 'passed', 112, NULL, NULL, NULL),
+  ('d1000000-0000-0000-0000-000000000003', 'c1000000-0000-0000-0000-000000000002', 'RBAC > denies missing project access', 'denies missing project access', 'passed', 74, NULL, NULL, NULL),
+  ('d1000000-0000-0000-0000-000000000004', 'c1000000-0000-0000-0000-000000000002', 'RBAC > allows maintainer role', 'allows maintainer role', 'passed', 81, NULL, NULL, NULL),
+
+  ('d2000000-0000-0000-0000-000000000001', 'c2000000-0000-0000-0000-000000000001', 'Checkout > creates authorized payment intent', 'creates authorized payment intent', 'passed', 120, NULL, NULL, NULL),
+  ('d2000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000001', 'Webhooks > ignores duplicate provider event', 'ignores duplicate provider event', 'skipped', 0, NULL, NULL, NULL),
+  ('d2000000-0000-0000-0000-000000000003', 'c2000000-0000-0000-0000-000000000002', 'Fraud > blocks card on rule hit', 'blocks card on rule hit', 'failed', 96, 'expected status blocked, got review', 'integration/fraud_test.go', 142),
+  ('d2000000-0000-0000-0000-000000000004', 'c2000000-0000-0000-0000-000000000002', 'Fraud > handles provider timeout retry', 'handles provider timeout retry', 'flaky', 203, 'passed on retry after transient timeout', 'integration/fraud_retry_test.go', 57),
+
+  ('d3000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'SSR > renders dashboard overview', 'renders dashboard overview', 'passed', 128, NULL, NULL, NULL),
+  ('d3000000-0000-0000-0000-000000000002', 'c3000000-0000-0000-0000-000000000001', 'SSR > handles stale session token', 'handles stale session token', 'failed', 88, 'expected redirect to /login', 'integration/session_test.go', 73),
+  ('d3000000-0000-0000-0000-000000000003', 'c3000000-0000-0000-0000-000000000001', 'UI > progressive hydration fallback', 'progressive hydration fallback', 'pending', 0, NULL, NULL, NULL),
+
+  ('d7000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000001', 'Orders > creates and reserves stock', 'creates and reserves stock', 'passed', 109, NULL, NULL, NULL),
+  ('d7000000-0000-0000-0000-000000000002', 'c7000000-0000-0000-0000-000000000001', 'Orders > cancels reservation on payment failure', 'cancels reservation on payment failure', 'passed', 117, NULL, NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO integration_test_runs (
+  id, project_id, branch, commit_sha, author, trigger_type, run_timestamp,
+  ginkgo_version, suite_description, suite_path, total_specs, passed_specs,
+  failed_specs, skipped_specs, flaked_specs, pending_specs, interrupted,
+  timed_out, duration_ms, status
+)
+VALUES
+  ('c4000000-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'main', 'autit001', 'dev-seed', 'push', NOW() - INTERVAL '15 hour', '2.21.0', 'auth-service integration suite', './integration', 22, 21, 1, 0, 0, 0, FALSE, FALSE, 22840, 'failed'),
+  ('c4000000-0000-0000-0000-000000000002', '44444444-4444-4444-4444-444444444444', 'feature/oidc-claims', 'autit002', 'dev-seed', 'pr', NOW() - INTERVAL '9 hour', '2.21.0', 'auth-service integration suite', './integration', 19, 18, 0, 1, 0, 0, FALSE, FALSE, 20120, 'passed'),
+
+  ('c5000000-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 'main', 'notit001', 'dev-seed', 'push', NOW() - INTERVAL '14 hour', '2.21.0', 'notifications integration suite', './integration', 16, 14, 1, 0, 1, 0, FALSE, FALSE, 19010, 'failed'),
+  ('c5000000-0000-0000-0000-000000000002', '55555555-5555-5555-5555-555555555555', 'feature/batch-retry', 'notit002', 'dev-seed', 'pr', NOW() - INTERVAL '7 hour', '2.21.0', 'notifications integration suite', './integration', 13, 13, 0, 0, 0, 0, FALSE, FALSE, 15300, 'passed'),
+
+  ('c6000000-0000-0000-0000-000000000001', '66666666-6666-6666-6666-666666666666', 'main', 'catit001', 'dev-seed', 'push', NOW() - INTERVAL '13 hour', '2.21.0', 'catalog integration suite', './integration', 24, 22, 1, 0, 0, 1, FALSE, FALSE, 27140, 'failed'),
+  ('c6000000-0000-0000-0000-000000000002', '66666666-6666-6666-6666-666666666666', 'feature/stock-sync', 'catit002', 'dev-seed', 'pr', NOW() - INTERVAL '6 hour', '2.21.0', 'catalog integration suite', './integration', 20, 20, 0, 0, 0, 0, FALSE, FALSE, 23600, 'passed'),
+
+  ('c8000000-0000-0000-0000-000000000001', '88888888-8888-8888-8888-888888888888', 'main', 'shpit001', 'dev-seed', 'push', NOW() - INTERVAL '11 hour', '2.21.0', 'shipping integration suite', './integration', 15, 14, 1, 0, 0, 0, FALSE, FALSE, 18220, 'failed'),
+  ('c8000000-0000-0000-0000-000000000002', '88888888-8888-8888-8888-888888888888', 'feature/label-cache', 'shpit002', 'dev-seed', 'pr', NOW() - INTERVAL '5 hour', '2.21.0', 'shipping integration suite', './integration', 12, 12, 0, 0, 0, 0, FALSE, FALSE, 14990, 'passed'),
+
+  ('c9000000-0000-0000-0000-000000000001', '99999999-9999-9999-9999-999999999999', 'main', 'anait001', 'dev-seed', 'push', NOW() - INTERVAL '10 hour', '2.21.0', 'analytics integration suite', './integration', 17, 15, 1, 0, 0, 1, FALSE, FALSE, 21110, 'failed'),
+  ('ca000000-0000-0000-0000-000000000001', 'aaaaaaaa-1111-1111-1111-111111111111', 'main', 'seait001', 'dev-seed', 'push', NOW() - INTERVAL '4 hour', '2.21.0', 'search integration suite', './integration', 21, 21, 0, 0, 0, 0, FALSE, FALSE, 24480, 'passed')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO integration_spec_results (
+  id, integration_run_id, spec_path, leaf_node_text, state, duration_ms,
+  failure_message, failure_location_file, failure_location_line
+)
+VALUES
+  ('d4000000-0000-0000-0000-000000000001', 'c4000000-0000-0000-0000-000000000001', 'OIDC > refresh token rotation', 'refresh token rotation', 'passed', 131, NULL, NULL, NULL),
+  ('d4000000-0000-0000-0000-000000000002', 'c4000000-0000-0000-0000-000000000001', 'OIDC > maps custom claim groups', 'maps custom claim groups', 'failed', 92, 'expected groups claim to include team-admin', 'integration/oidc_claims_test.go', 118),
+  ('d4000000-0000-0000-0000-000000000003', 'c4000000-0000-0000-0000-000000000002', 'RBAC > validates service token', 'validates service token', 'passed', 84, NULL, NULL, NULL),
+  ('d4000000-0000-0000-0000-000000000004', 'c4000000-0000-0000-0000-000000000002', 'RBAC > denies unknown scope', 'denies unknown scope', 'skipped', 0, NULL, NULL, NULL),
+
+  ('d5000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'Email > sends templated digest', 'sends templated digest', 'passed', 122, NULL, NULL, NULL),
+  ('d5000000-0000-0000-0000-000000000002', 'c5000000-0000-0000-0000-000000000001', 'Retry > exponential backoff with jitter', 'exponential backoff with jitter', 'flaky', 211, 'transient broker timeout recovered on retry', 'integration/retry_test.go', 67),
+  ('d5000000-0000-0000-0000-000000000003', 'c5000000-0000-0000-0000-000000000001', 'Webhook > signs outbound payload', 'signs outbound payload', 'failed', 77, 'expected HMAC header to be present', 'integration/webhook_test.go', 91),
+  ('d5000000-0000-0000-0000-000000000004', 'c5000000-0000-0000-0000-000000000002', 'Batch > drains queue on shutdown', 'drains queue on shutdown', 'passed', 98, NULL, NULL, NULL),
+
+  ('d6000000-0000-0000-0000-000000000001', 'c6000000-0000-0000-0000-000000000001', 'Ingest > merges duplicate SKU updates', 'merges duplicate SKU updates', 'passed', 126, NULL, NULL, NULL),
+  ('d6000000-0000-0000-0000-000000000002', 'c6000000-0000-0000-0000-000000000001', 'Search > reindex on schema migration', 'reindex on schema migration', 'failed', 101, 'expected zero stale docs after migration', 'integration/reindex_test.go', 144),
+  ('d6000000-0000-0000-0000-000000000003', 'c6000000-0000-0000-0000-000000000001', 'Stock > backfill historical events', 'backfill historical events', 'pending', 0, NULL, NULL, NULL),
+  ('d6000000-0000-0000-0000-000000000004', 'c6000000-0000-0000-0000-000000000002', 'Stock > syncs external inventory snapshot', 'syncs external inventory snapshot', 'passed', 115, NULL, NULL, NULL),
+
+  ('d8000000-0000-0000-0000-000000000001', 'c8000000-0000-0000-0000-000000000001', 'Labels > caches generated labels', 'caches generated labels', 'passed', 110, NULL, NULL, NULL),
+  ('d8000000-0000-0000-0000-000000000002', 'c8000000-0000-0000-0000-000000000001', 'Rates > fallback carrier lookup', 'fallback carrier lookup', 'failed', 86, 'expected fallback carrier response within SLA', 'integration/rates_test.go', 79),
+  ('d8000000-0000-0000-0000-000000000003', 'c8000000-0000-0000-0000-000000000002', 'Labels > cache invalidation on template change', 'cache invalidation on template change', 'passed', 97, NULL, NULL, NULL),
+
+  ('d9000000-0000-0000-0000-000000000001', 'c9000000-0000-0000-0000-000000000001', 'ETL > backfills historical partitions', 'backfills historical partitions', 'passed', 132, NULL, NULL, NULL),
+  ('d9000000-0000-0000-0000-000000000002', 'c9000000-0000-0000-0000-000000000001', 'Dashboards > enforces tenant filters', 'enforces tenant filters', 'failed', 95, 'expected tenant filter in generated SQL', 'integration/dashboards_test.go', 103),
+  ('d9000000-0000-0000-0000-000000000003', 'c9000000-0000-0000-0000-000000000001', 'Dashboards > recovers stale cache snapshots', 'recovers stale cache snapshots', 'pending', 0, NULL, NULL, NULL),
+
+  ('da000000-0000-0000-0000-000000000001', 'ca000000-0000-0000-0000-000000000001', 'Ranking > recalculates BM25 boosts', 'recalculates BM25 boosts', 'passed', 123, NULL, NULL, NULL),
+  ('da000000-0000-0000-0000-000000000002', 'ca000000-0000-0000-0000-000000000001', 'Index > handles alias swap with no downtime', 'handles alias swap with no downtime', 'passed', 119, NULL, NULL, NULL)
+ON CONFLICT (id) DO NOTHING;

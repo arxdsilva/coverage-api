@@ -28,6 +28,20 @@ type PackageCoverageRepository interface {
 	ListByRunID(ctx context.Context, runID string) ([]domain.PackageCoverage, error)
 }
 
+type IntegrationTestRunRepository interface {
+	Create(ctx context.Context, run domain.IntegrationTestRun) (domain.IntegrationTestRun, error)
+	GetLatestByProjectAndBranch(ctx context.Context, projectID string, branch string) (domain.IntegrationTestRun, error)
+	GetLatestByProject(ctx context.Context, projectID string) (domain.IntegrationTestRun, error)
+	GetByID(ctx context.Context, projectID string, runID string) (domain.IntegrationTestRun, error)
+	ListByProject(ctx context.Context, projectID string, branch string, status string, from *time.Time, to *time.Time, page int, pageSize int) ([]domain.IntegrationTestRun, int, error)
+}
+
+type IntegrationSpecResultRepository interface {
+	CreateBatch(ctx context.Context, specs []domain.IntegrationSpecResult) error
+	ListByRunID(ctx context.Context, runID string) ([]domain.IntegrationSpecResult, error)
+	ListFailedByRunID(ctx context.Context, runID string) ([]domain.IntegrationSpecResult, error)
+}
+
 type APIKeyAuthenticator interface {
 	Authenticate(ctx context.Context, apiKey string) error
 	WantedAPIKey() string
