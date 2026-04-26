@@ -474,6 +474,11 @@ h3 {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.heatmap-time-direction {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
 .integration-heatmap-project-row {
   display: grid;
   grid-template-columns: 160px minmax(0, 1fr);
@@ -484,6 +489,16 @@ h3 {
   border-radius: 8px;
   border: 1px solid rgba(39, 52, 81, 0.5);
   background: rgba(14, 20, 35, 0.7);
+}
+
+.integration-heatmap-project-row.newest-passed {
+  border-color: rgba(67, 246, 166, 0.6);
+  background: rgba(67, 246, 166, 0.16);
+}
+
+.integration-heatmap-project-row.newest-failed {
+  border-color: rgba(255, 93, 122, 0.6);
+  background: rgba(255, 93, 122, 0.16);
 }
 
 .integration-heatmap-project-name {
@@ -502,6 +517,14 @@ h3 {
   flex-wrap: nowrap;
   overflow-x: auto;
   padding-bottom: 2px;
+}
+
+.integration-heatmap-arrow {
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.85;
+  user-select: none;
 }
 
 .integration-heatmap-tile {

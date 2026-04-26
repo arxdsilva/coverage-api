@@ -823,6 +823,12 @@ function renderHeatmap(groups) {
     for (const project of group.projects || []) {
       const rowEl = document.createElement('div');
       rowEl.className = 'integration-heatmap-project-row';
+      const newestRun = Array.isArray(project.runs) && project.runs.length > 0 ? project.runs[0] : null;
+      if (newestRun?.status === 'passed') {
+        rowEl.classList.add('newest-passed');
+      } else if (newestRun?.status === 'failed') {
+        rowEl.classList.add('newest-failed');
+      }
 
       const nameEl = document.createElement('span');
       nameEl.className = 'integration-heatmap-project-name';
@@ -833,7 +839,8 @@ function renderHeatmap(groups) {
       const tilesEl = document.createElement('div');
       tilesEl.className = 'integration-heatmap-tiles';
 
-      for (const run of project.runs || []) {
+      const runs = project.runs || [];
+      runs.forEach((run, index) => {
         const tile = document.createElement('button');
         tile.type = 'button';
         tile.className = `integration-heatmap-tile ${run.status === 'passed' ? 'passed' : 'failed'}`;
@@ -869,7 +876,16 @@ function renderHeatmap(groups) {
         });
 
         tilesEl.appendChild(tile);
-      }
+
+        if (index < runs.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.className = 'integration-heatmap-arrow';
+          arrow.textContent = '←';
+          arrow.title = 'Oldest to newest';
+          arrow.setAttribute('aria-hidden', 'true');
+          tilesEl.appendChild(arrow);
+        }
+      });
 
       rowEl.appendChild(tilesEl);
       groupEl.appendChild(rowEl);
