@@ -11,6 +11,7 @@ const integrationDuration = document.getElementById('integrationDuration');
 const integrationBranchFilter = document.getElementById('integrationBranchFilter');
 const integrationStatusFilter = document.getElementById('integrationStatusFilter');
 const integrationReload = document.getElementById('integrationReload');
+const integrationRunChain = document.getElementById('integrationRunChain');
 const integrationRunsBody = document.getElementById('integrationRunsBody');
 const integrationFailedSpecsBody = document.getElementById('integrationFailedSpecsBody');
 const appShell = document.getElementById('appShell');
@@ -155,6 +156,7 @@ async function selectProject(projectId) {
 
 async function loadIntegrationScreen(projectId) {
   if (!projectId) {
+    integrationRunChain.innerHTML = '<p class="muted">Select a project to view its run chain.</p>';
     integrationRunsBody.innerHTML = '<tr><td colspan="7" class="muted">Select a project first.</td></tr>';
     integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">No run selected.</td></tr>';
     return;
@@ -186,6 +188,7 @@ async function loadIntegrationLatestComparison(projectId) {
 }
 
 async function loadIntegrationRuns(projectId) {
+  integrationRunChain.innerHTML = '';
   integrationRunsBody.innerHTML = '';
   selectedIntegrationRunId = null;
 
@@ -205,8 +208,11 @@ async function loadIntegrationRuns(projectId) {
     const data = await res.json();
     const items = data.items || [];
 
+    renderIntegrationRunChain(items);
+
     for (const run of items) {
       const tr = document.createElement('tr');
+      tr.dataset.runId = run.id;
       tr.innerHTML = `
         <td class="code">${run.id}</td>
         <td>${run.branch}</td>
@@ -218,6 +224,8 @@ async function loadIntegrationRuns(projectId) {
       `;
       tr.addEventListener('click', async () => {
         selectedIntegrationRunId = run.id;
+        highlightSelectedRunRow();
+        renderIntegrationRunChain(items);
         await loadIntegrationRunDetails(projectId, run.id);
       });
       integrationRunsBody.appendChild(tr);
@@ -230,10 +238,67 @@ async function loadIntegrationRuns(projectId) {
     }
 
     selectedIntegrationRunId = items[0].id;
+    highlightSelectedRunRow();
+    renderIntegrationRunChain(items);
     await loadIntegrationRunDetails(projectId, selectedIntegrationRunId);
   } catch (err) {
+    integrationRunChain.innerHTML = `<p class="muted">${err.message}</p>`;
     integrationRunsBody.innerHTML = `<tr><td colspan="7" class="muted">${err.message}</td></tr>`;
     integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">Failed to load selected run details.</td></tr>';
+  }
+}
+
+function renderIntegrationRunChain(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    integrationRunChain.innerHTML = '<p class="muted">No integration runs found for current filters.</p>';
+    return;
+  }
+
+  const track = document.createElement('div');
+  track.className = 'integration-run-chain-track';
+
+  items.forEach((run, index) => {
+    const item = document.createElement('div');
+    item.className = 'integration-chain-item';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `integration-chain-node ${run.status === 'passed' ? 'passed' : 'failed'}`;
+    if (selectedIntegrationRunId === run.id) {
+      button.classList.add('selected');
+    }
+    button.title = `${run.status.toUpperCase()} | ${formatDateTime(run.runTimestamp)} | ${pct(run.passRatePercent)}`;
+    button.setAttribute('aria-label', `Run ${run.id}, ${run.status}, pass rate ${pct(run.passRatePercent)}`);
+    button.addEventListener('click', async () => {
+      selectedIntegrationRunId = run.id;
+      highlightSelectedRunRow();
+      renderIntegrationRunChain(items);
+      await loadIntegrationRunDetails(selectedProjectId, run.id);
+    });
+
+    const label = document.createElement('p');
+    label.className = 'integration-chain-label';
+    label.textContent = shortCommit(run.commitSha);
+
+    item.appendChild(button);
+    item.appendChild(label);
+    track.appendChild(item);
+
+    if (index < items.length - 1) {
+      const connector = document.createElement('span');
+      connector.className = 'integration-chain-connector';
+      track.appendChild(connector);
+    }
+  });
+
+  integrationRunChain.innerHTML = '';
+  integrationRunChain.appendChild(track);
+}
+
+function highlightSelectedRunRow() {
+  const rows = integrationRunsBody.querySelectorAll('tr[data-run-id]');
+  for (const row of rows) {
+    row.classList.toggle('selected-row', row.dataset.runId === selectedIntegrationRunId);
   }
 }
 
@@ -274,6 +339,18 @@ function signedPct(v) {
   const n = Number(v);
   if (Number.isNaN(n)) return '-';
   return `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
+}
+
+function shortCommit(commitSha) {
+  if (!commitSha) return '-';
+  return String(commitSha).slice(0, 7);
+}
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString();
 }
 
 function escapeHtml(value) {

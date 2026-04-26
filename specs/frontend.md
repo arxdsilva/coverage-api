@@ -42,6 +42,14 @@ Navigation behavior:
 4. Browser back/forward navigation between `/` and `/integration` is supported.
 5. Navigation works even when JavaScript fails to initialize because these controls are real links (`<a href=...>`).
 
+Integration route behavior:
+
+1. The integration dashboard includes a `Run Chain` graphic rendered from the current run history query.
+2. Each node in the chain represents one integration run.
+3. Node color encodes run status: green for `passed`, red for `failed`.
+4. Nodes are ordered newest to oldest and connected in a horizontal chain.
+5. Selecting a node focuses the corresponding run and refreshes failed-spec details.
+
 ## No User Authentication
 
 The frontend does not require user login/auth.

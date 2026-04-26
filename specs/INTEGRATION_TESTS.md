@@ -281,6 +281,8 @@ Returns one run with full failed spec list and summary metrics.
 2. Dedicated integration screen includes `Failed Specs` drawer/modal for selected run.
 3. Dedicated integration screen includes filters: branch, date range, and status.
 4. Dedicated integration screen header includes `Back to Home` control.
+5. Dedicated integration screen includes a horizontal run-chain graphic where each node is a run, ordered newest-to-oldest, colored green for `passed` and red for `failed`.
+6. Clicking a run-chain node selects that run and updates the failed-spec details pane.
 
 ### 8.3 Frontend Proxy Routes
 Add frontend server proxy routes:
