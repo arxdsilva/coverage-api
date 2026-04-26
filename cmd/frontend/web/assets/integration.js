@@ -1,5 +1,6 @@
 const refreshProjects = document.getElementById('refreshProjects');
 const projectSelector = document.getElementById('projectSelector');
+const projectGroupFilter = document.getElementById('projectGroupFilter');
 const projectSearchInput = document.getElementById('projectSearchInput');
 const integrationScreenProjectTitle = document.getElementById('integrationScreenProjectTitle');
 const integrationScreenProjectMeta = document.getElementById('integrationScreenProjectMeta');
@@ -32,6 +33,8 @@ let filteredProjects = [];
 let selectedProjectId = null;
 let selectedIntegrationRunId = null;
 let currentIntegrationRunItems = [];
+const allGroupsFilterValue = '__all__';
+const ungroupedFilterValue = '__ungrouped__';
 const sidebarCollapsedKey = 'opencoverage.sidebarCollapsed.integration';
 const integrationAutoRefreshStorageKey = 'opencoverage.autoRefresh.integration';
 const integrationAutoRefreshIntervals = Object.freeze({
@@ -56,6 +59,10 @@ integrationAutoRefreshInterval.addEventListener('change', () => {
 });
 projectSelector.addEventListener('change', async (e) => {
   await selectProject(e.target.value);
+});
+projectGroupFilter.addEventListener('change', async () => {
+  filterAndRenderProjects(projectSearchInput.value);
+  await ensureSelectedProjectIsVisible();
 });
 projectSearchInput.addEventListener('input', (e) => {
   filterAndRenderProjects(e.target.value);
@@ -333,21 +340,27 @@ async function loadProjects() {
     }
 
     projects = items;
-    filteredProjects = items;
+    renderProjectGroupFilter();
+    filterAndRenderProjects(projectSearchInput.value);
 
-    const nextSelectedProjectId = items.some((project) => project.id === selectedProjectId)
+    const nextSelectedProjectId = filteredProjects.some((project) => project.id === selectedProjectId)
       ? selectedProjectId
-      : (items[0]?.id || null);
-
-    renderProjectSelector();
+      : (filteredProjects[0]?.id || null);
 
     if (!nextSelectedProjectId) {
       selectedProjectId = null;
       selectedIntegrationRunId = null;
-      integrationScreenProjectTitle.textContent = 'No projects found';
-      integrationScreenProjectMeta.textContent = 'Upload integration runs to populate this view.';
-      integrationRunChain.innerHTML = '<p class="muted">No integration runs found.</p>';
-      integrationRunsBody.innerHTML = '<tr><td colspan="7" class="muted">No integration runs found.</td></tr>';
+      if (items.length === 0) {
+        integrationScreenProjectTitle.textContent = 'No projects found';
+        integrationScreenProjectMeta.textContent = 'Upload integration runs to populate this view.';
+        integrationRunChain.innerHTML = '<p class="muted">No integration runs found.</p>';
+        integrationRunsBody.innerHTML = '<tr><td colspan="7" class="muted">No integration runs found.</td></tr>';
+      } else {
+        integrationScreenProjectTitle.textContent = 'No projects for current filter';
+        integrationScreenProjectMeta.textContent = 'Adjust group and search filters to select a project.';
+        integrationRunChain.innerHTML = '<p class="muted">No projects match current filters.</p>';
+        integrationRunsBody.innerHTML = '<tr><td colspan="7" class="muted">No projects match current filters.</td></tr>';
+      }
       integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">No run selected.</td></tr>';
       integrationStatus.textContent = '-';
       integrationStatus.className = 'value';
@@ -355,6 +368,7 @@ async function loadProjects() {
       integrationFailedSpecsCount.textContent = '-';
       integrationDelta.textContent = '-';
       integrationDuration.textContent = '-';
+      renderProjectSelector();
     } else if (nextSelectedProjectId === selectedProjectId) {
       await selectProject(nextSelectedProjectId, { preferredRunId: selectedIntegrationRunId });
       renderProjectSelector();
@@ -368,6 +382,39 @@ async function loadProjects() {
   }
 }
 
+function getProjectGroupValue(project) {
+  const rawGroup = typeof project?.group === 'string' ? project.group.trim() : '';
+  return rawGroup || ungroupedFilterValue;
+}
+
+function renderProjectGroupFilter() {
+  const selectedValue = projectGroupFilter.value || allGroupsFilterValue;
+  const groupValues = Array.from(new Set(projects.map((project) => getProjectGroupValue(project))));
+  groupValues.sort((a, b) => {
+    if (a === ungroupedFilterValue) return 1;
+    if (b === ungroupedFilterValue) return -1;
+    return a.localeCompare(b);
+  });
+
+  projectGroupFilter.innerHTML = '';
+
+  const allOption = document.createElement('option');
+  allOption.value = allGroupsFilterValue;
+  allOption.textContent = 'All groups';
+  projectGroupFilter.appendChild(allOption);
+
+  for (const groupValue of groupValues) {
+    const option = document.createElement('option');
+    option.value = groupValue;
+    option.textContent = groupValue === ungroupedFilterValue ? 'Ungrouped' : groupValue;
+    projectGroupFilter.appendChild(option);
+  }
+
+  projectGroupFilter.value = [allGroupsFilterValue, ...groupValues].includes(selectedValue)
+    ? selectedValue
+    : allGroupsFilterValue;
+}
+
 function renderProjectSelector() {
   projectSelector.innerHTML = '';
 
@@ -375,6 +422,14 @@ function renderProjectSelector() {
   emptyOption.value = '';
   emptyOption.textContent = 'Select a project...';
   projectSelector.appendChild(emptyOption);
+
+  if (filteredProjects.length === 0) {
+    const noResultsOption = document.createElement('option');
+    noResultsOption.value = '';
+    noResultsOption.textContent = 'No projects match current filters';
+    noResultsOption.disabled = true;
+    projectSelector.appendChild(noResultsOption);
+  }
 
   for (const project of filteredProjects) {
     const option = document.createElement('option');
@@ -388,15 +443,48 @@ function renderProjectSelector() {
 
 function filterAndRenderProjects(searchTerm) {
   const term = searchTerm.toLowerCase();
-  if (!term) {
-    filteredProjects = projects;
-  } else {
-    filteredProjects = projects.filter((p) => {
-      const name = (p.name || '').toLowerCase();
-      const key = (p.projectKey || '').toLowerCase();
-      return name.includes(term) || key.includes(term);
-    });
+  const selectedGroup = projectGroupFilter.value || allGroupsFilterValue;
+  filteredProjects = projects.filter((p) => {
+    const groupMatches = selectedGroup === allGroupsFilterValue
+      || getProjectGroupValue(p) === selectedGroup;
+    if (!groupMatches) return false;
+    if (!term) return true;
+
+    const name = (p.name || '').toLowerCase();
+    const key = (p.projectKey || '').toLowerCase();
+    return name.includes(term) || key.includes(term);
+  });
+
+  renderProjectSelector();
+}
+
+async function ensureSelectedProjectIsVisible() {
+  const selectedVisible = filteredProjects.some((project) => project.id === selectedProjectId);
+  if (selectedVisible) {
+    renderProjectSelector();
+    return;
   }
+
+  const nextProjectId = filteredProjects[0]?.id || null;
+  if (!nextProjectId) {
+    selectedProjectId = null;
+    selectedIntegrationRunId = null;
+    integrationScreenProjectTitle.textContent = 'No projects for current filter';
+    integrationScreenProjectMeta.textContent = 'Adjust group and search filters to select a project.';
+    integrationRunChain.innerHTML = '<p class="muted">No projects match current filters.</p>';
+    integrationRunsBody.innerHTML = '<tr><td colspan="7" class="muted">No projects match current filters.</td></tr>';
+    integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">No run selected.</td></tr>';
+    integrationStatus.textContent = '-';
+    integrationStatus.className = 'value';
+    integrationPassRate.textContent = '-';
+    integrationFailedSpecsCount.textContent = '-';
+    integrationDelta.textContent = '-';
+    integrationDuration.textContent = '-';
+    renderProjectSelector();
+    return;
+  }
+
+  await selectProject(nextProjectId);
   renderProjectSelector();
 }
 
@@ -433,8 +521,17 @@ async function loadIntegrationBranches(projectId, defaultBranch) {
 async function selectProject(projectId, options = {}) {
   const { preferredRunId = null } = options;
 
+  if (!projectId) {
+    selectedProjectId = null;
+    selectedIntegrationRunId = null;
+    integrationScreenProjectTitle.textContent = 'Select a project';
+    integrationScreenProjectMeta.textContent = 'Choose a project from the left menu.';
+    await loadIntegrationScreen(null);
+    renderProjectSelector();
+    return;
+  }
+
   selectedProjectId = projectId;
-  projectSearchInput.value = '';
 
   const project = projects.find((p) => p.id === projectId);
   integrationScreenProjectTitle.textContent = project?.name || project?.projectKey || 'Project';

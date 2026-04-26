@@ -232,6 +232,7 @@ Frontend highlights:
 - Heatmap overlay shows all projects grouped by team, with tiles color-coded on a -3% to +3% delta scale (green = improved, red = regressed). A scale legend is displayed in the overlay header.
 - Top Contributors overlay shows the leading commit contributors per project across all teams, grouped the same way as the heatmap.
 - Integration Tests screen provides per-project integration test run history, failed spec details, and an all-projects Integration Heatmap overlay showing the most recent runs per project grouped by team, with pass/fail status visualization.
+- Integration Tests sidebar now supports group-first project navigation: filter by project group, then select a project from the filtered list (combined with project search).
 
 ## Typical Integration Flow
 

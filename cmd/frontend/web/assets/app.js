@@ -21,6 +21,7 @@ const contributorsOverlay = document.getElementById('contributorsOverlay');
 const contributorsGrid = document.getElementById('contributorsGrid');
 const contributorsOverlayMeta = document.getElementById('contributorsOverlayMeta');
 const projectSelector = document.getElementById('projectSelector');
+const projectGroupFilter = document.getElementById('projectGroupFilter');
 const projectSearchInput = document.getElementById('projectSearchInput');
 const compareCard = document.getElementById('compareCard');
 const compareSummary = document.getElementById('compareSummary');
@@ -46,6 +47,8 @@ let trendChart = null;
 let heatmapLayoutFrame = 0;
 let contributorsLayoutFrame = 0;
 let trendRequestSequence = 0;
+const allGroupsFilterValue = '__all__';
+const ungroupedFilterValue = '__ungrouped__';
 const sidebarCollapsedKey = 'opencoverage.sidebarCollapsed';
 const homeAutoRefreshStorageKey = 'opencoverage.autoRefresh.home';
 const homeAutoRefreshIntervals = Object.freeze({
@@ -90,6 +93,10 @@ openContributors.addEventListener('click', async () => {
 closeContributors.addEventListener('click', () => toggleContributorsOverlay(false));
 projectSelector.addEventListener('change', async (e) => {
   await selectProject(e.target.value);
+});
+projectGroupFilter.addEventListener('change', async () => {
+  filterAndRenderProjects(projectSearchInput.value);
+  await ensureSelectedProjectIsVisible();
 });
 projectSearchInput.addEventListener('input', (e) => {
   filterAndRenderProjects(e.target.value);
@@ -360,19 +367,23 @@ async function loadProjects() {
 
     projects = items;
     allProjects = items;
-    filteredProjects = items;
+    renderProjectGroupFilter();
+    filterAndRenderProjects(projectSearchInput.value);
 
-    const nextSelectedProjectId = items.some((project) => project.id === selectedProjectId)
+    const nextSelectedProjectId = filteredProjects.some((project) => project.id === selectedProjectId)
       ? selectedProjectId
-      : (items[0]?.id || null);
-
-    renderProjectSelector();
+      : (filteredProjects[0]?.id || null);
 
     if (!nextSelectedProjectId) {
       selectedProjectId = null;
       selectedBranch = '';
-      selectedProjectName.textContent = 'No projects found';
-      selectedProjectMeta.textContent = 'Ingest coverage data to populate the dashboard.';
+      if (items.length === 0) {
+        selectedProjectName.textContent = 'No projects found';
+        selectedProjectMeta.textContent = 'Ingest coverage data to populate the dashboard.';
+      } else {
+        selectedProjectName.textContent = 'No projects for current filter';
+        selectedProjectMeta.textContent = 'Adjust group and search filters to select a project.';
+      }
       branchSelector.innerHTML = '<option value="">No branches available</option>';
       runsBody.innerHTML = '<tr><td colspan="5" class="muted">No runs found.</td></tr>';
       packagesBody.innerHTML = '<tr><td colspan="5" class="muted">No comparison data available.</td></tr>';
@@ -386,6 +397,7 @@ async function loadProjects() {
       compareBaseline.textContent = '-';
       compareRunType.textContent = '-';
       compareCard.classList.remove('pr-mode');
+      renderProjectSelector();
     } else if (nextSelectedProjectId === selectedProjectId) {
       await selectProject(nextSelectedProjectId, { resetBranch: false });
       renderProjectSelector();
@@ -402,6 +414,39 @@ async function loadProjects() {
   }
 }
 
+function getProjectGroupValue(project) {
+  const rawGroup = typeof project?.group === 'string' ? project.group.trim() : '';
+  return rawGroup || ungroupedFilterValue;
+}
+
+function renderProjectGroupFilter() {
+  const selectedValue = projectGroupFilter.value || allGroupsFilterValue;
+  const groupValues = Array.from(new Set(allProjects.map((project) => getProjectGroupValue(project))));
+  groupValues.sort((a, b) => {
+    if (a === ungroupedFilterValue) return 1;
+    if (b === ungroupedFilterValue) return -1;
+    return a.localeCompare(b);
+  });
+
+  projectGroupFilter.innerHTML = '';
+
+  const allOption = document.createElement('option');
+  allOption.value = allGroupsFilterValue;
+  allOption.textContent = 'All groups';
+  projectGroupFilter.appendChild(allOption);
+
+  for (const groupValue of groupValues) {
+    const option = document.createElement('option');
+    option.value = groupValue;
+    option.textContent = groupValue === ungroupedFilterValue ? 'Ungrouped' : groupValue;
+    projectGroupFilter.appendChild(option);
+  }
+
+  projectGroupFilter.value = [allGroupsFilterValue, ...groupValues].includes(selectedValue)
+    ? selectedValue
+    : allGroupsFilterValue;
+}
+
 function renderProjectSelector() {
   projectSelector.innerHTML = '';
   
@@ -409,6 +454,14 @@ function renderProjectSelector() {
   emptyOption.value = '';
   emptyOption.textContent = 'Select a project...';
   projectSelector.appendChild(emptyOption);
+
+  if (filteredProjects.length === 0) {
+    const noResultsOption = document.createElement('option');
+    noResultsOption.value = '';
+    noResultsOption.textContent = 'No projects match current filters';
+    noResultsOption.disabled = true;
+    projectSelector.appendChild(noResultsOption);
+  }
   
   for (const project of filteredProjects) {
     const option = document.createElement('option');
@@ -422,26 +475,85 @@ function renderProjectSelector() {
 
 function filterAndRenderProjects(searchTerm) {
   const term = searchTerm.toLowerCase();
-  if (!term) {
-    filteredProjects = allProjects;
-  } else {
-    filteredProjects = allProjects.filter(p => {
-      const name = (p.name || '').toLowerCase();
-      const key = (p.projectKey || '').toLowerCase();
-      return name.includes(term) || key.includes(term);
-    });
+  const selectedGroup = projectGroupFilter.value || allGroupsFilterValue;
+  filteredProjects = allProjects.filter((p) => {
+    const groupMatches = selectedGroup === allGroupsFilterValue
+      || getProjectGroupValue(p) === selectedGroup;
+    if (!groupMatches) return false;
+    if (!term) return true;
+
+    const name = (p.name || '').toLowerCase();
+    const key = (p.projectKey || '').toLowerCase();
+    return name.includes(term) || key.includes(term);
+  });
+
+  renderProjectSelector();
+}
+
+async function ensureSelectedProjectIsVisible() {
+  const selectedVisible = filteredProjects.some((project) => project.id === selectedProjectId);
+  if (selectedVisible) {
+    renderProjectSelector();
+    return;
   }
+
+  const nextProjectId = filteredProjects[0]?.id || null;
+  if (!nextProjectId) {
+    selectedProjectId = null;
+    selectedBranch = '';
+    selectedProjectName.textContent = 'No projects for current filter';
+    selectedProjectMeta.textContent = 'Adjust group and search filters to select a project.';
+    branchSelector.innerHTML = '<option value="">No branches available</option>';
+    runsBody.innerHTML = '<tr><td colspan="5" class="muted">No runs found.</td></tr>';
+    packagesBody.innerHTML = '<tr><td colspan="5" class="muted">No comparison data available.</td></tr>';
+    currentCoverage.textContent = '-';
+    previousCoverage.textContent = '-';
+    deltaCoverage.textContent = '-';
+    thresholdPercent.textContent = '-';
+    thresholdStatus.textContent = '-';
+    compareSummary.textContent = 'No project selected.';
+    compareCurrent.textContent = '-';
+    compareBaseline.textContent = '-';
+    compareRunType.textContent = '-';
+    compareCard.classList.remove('pr-mode');
+    renderProjectSelector();
+    return;
+  }
+
+  await selectProject(nextProjectId);
   renderProjectSelector();
 }
 
 async function selectProject(projectId, options = {}) {
   const { resetBranch = true } = options;
 
+  if (!projectId) {
+    selectedProjectId = null;
+    selectedBranch = '';
+    selectedProjectName.textContent = 'Select a project';
+    selectedProjectMeta.textContent = 'Choose a project from the left menu.';
+    branchSelector.innerHTML = '<option value="">No branches available</option>';
+    runsBody.innerHTML = '<tr><td colspan="5" class="muted">No runs found.</td></tr>';
+    packagesBody.innerHTML = '<tr><td colspan="5" class="muted">No comparison data available.</td></tr>';
+    currentCoverage.textContent = '-';
+    previousCoverage.textContent = '-';
+    deltaCoverage.textContent = '-';
+    thresholdPercent.textContent = '-';
+    thresholdStatus.textContent = '-';
+    compareSummary.textContent = 'No project selected.';
+    compareCurrent.textContent = '-';
+    compareBaseline.textContent = '-';
+    compareRunType.textContent = '-';
+    compareCard.classList.remove('pr-mode');
+    renderProjectSelector();
+    renderHeatmap();
+    return;
+  }
+
   selectedProjectId = projectId;
   if (resetBranch) {
     selectedBranch = '';
   }
-  projectSearchInput.value = '';
   renderHeatmap();
 
   const project = getProjectById(projectId);
@@ -1073,6 +1185,10 @@ async function loadTrendChart(projectId, defaultBranch, branches = availableBran
   const canvas = document.getElementById('trendChart');
   if (!canvas) return;
 
+  const trendTextColor = '#1f2937';
+  const trendMutedTextColor = '#4b5563';
+  const trendGridColor = 'rgba(148, 163, 184, 0.38)';
+
   const requestSequence = ++trendRequestSequence;
 
   try {
@@ -1140,7 +1256,7 @@ async function loadTrendChart(projectId, defaultBranch, branches = availableBran
           legend: {
             display: true,
             labels: {
-              color: '#d5def2',
+              color: trendTextColor,
               font: { family: 'Space Grotesk', size: 12 },
             },
           },
@@ -1161,9 +1277,9 @@ async function loadTrendChart(projectId, defaultBranch, branches = availableBran
         scales: {
           x: {
             type: 'linear',
-            grid: { color: 'rgba(39, 52, 81, 0.5)' },
+            grid: { color: trendGridColor },
             ticks: {
-              color: '#a4b2cf',
+              color: trendMutedTextColor,
               font: { family: 'JetBrains Mono', size: 11 },
               callback: (value) => formatTrendTick(value),
               maxTicksLimit: 5,
@@ -1171,16 +1287,16 @@ async function loadTrendChart(projectId, defaultBranch, branches = availableBran
             title: {
               display: true,
               text: 'Run Time',
-              color: '#a4b2cf',
+              color: trendMutedTextColor,
               font: { family: 'Space Grotesk', size: 11 },
             },
           },
           y: {
             min: minVal,
             max: maxVal,
-            grid: { color: 'rgba(39, 52, 81, 0.5)' },
+            grid: { color: trendGridColor },
             ticks: {
-              color: '#a4b2cf',
+              color: trendMutedTextColor,
               font: { family: 'Space Grotesk', size: 11 },
               callback: (v) => `${v}%`,
             },

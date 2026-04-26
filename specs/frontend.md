@@ -69,6 +69,12 @@ Opens the heatmap overlay on page load.
 
 This allows deep linking to either heatmap visualization directly.
 
+Home route behavior:
+
+1. The left sidebar `Select Project` area supports two-step selection: choose a project group first, then choose a project from that filtered group.
+2. Group filtering and project-name search are combined. The project dropdown only lists projects matching both filters.
+3. If current filters exclude the selected project, the screen automatically selects the first matching project; if no project matches, the screen enters a filtered empty state without clearing filter controls.
+
 Integration route behavior:
 
 1. The integration dashboard includes a `Run Chain` graphic rendered from the current run history query.
@@ -82,6 +88,9 @@ Integration route behavior:
 9. Heatmap tiles use green/red color scales for pass/fail outcomes; intensity encodes pass rate.
 10. Clicking a heatmap tile for the active project synchronizes selected state with run chain, run table, and failed-spec details.
 11. Heatmap has its own branch and status filters independent from the per-project run table filters.
+12. The left sidebar `Select Project` area supports two-step selection: choose a project group first, then choose a project from that filtered group.
+13. Group filtering and project-name search are combined. The project dropdown only lists projects matching both filters.
+14. If current filters exclude the selected project, the screen automatically selects the first matching project; if no project matches, the screen enters a filtered empty state without clearing filter controls.
 
 ## Refresh Mechanism
 
