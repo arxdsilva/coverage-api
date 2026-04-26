@@ -61,6 +61,12 @@ Integration route behavior:
 3. Node color encodes run status: green for `passed`, red for `failed`.
 4. Nodes are ordered newest to oldest and connected in a horizontal chain.
 5. Selecting a node focuses the corresponding run and refreshes failed-spec details.
+6. The integration dashboard includes an `Integration Heatmap` that shows recent runs for **all projects** simultaneously, organized by project group.
+7. Heatmap layout: projects are grouped by their `group` field, rendered as labeled sections. Within each group, one row per project, one tile per run ordered newest-to-oldest. Projects with no group appear in an unlabeled section at the bottom.
+8. Heatmap data is sourced from `GET /api/integration-test-runs/heatmap` (all-project aggregated endpoint), which returns runs pre-grouped by project group.
+9. Heatmap tiles use green/red color scales for pass/fail outcomes; intensity encodes pass rate.
+10. Clicking a heatmap tile for the active project synchronizes selected state with run chain, run table, and failed-spec details.
+11. Heatmap has its own branch and status filters independent from the per-project run table filters.
 
 ## No User Authentication
 

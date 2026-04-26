@@ -262,6 +262,61 @@ Returns latest run summary and latest-vs-baseline comparison.
 ### 7.3 GET /v1/projects/{projectId}/integration-test-runs/{runId}
 Returns one run with full failed spec list and summary metrics.
 
+### 7.4 GET /v1/integration-test-runs/heatmap
+Returns recent integration runs grouped by project, intended for the all-project heatmap view.
+
+Query params:
+1. `runsPerProject` (optional, default 10, max 30) — number of most recent runs to return per project.
+2. `branch` (optional) — filter runs to a specific branch name across all projects.
+3. `status` (optional `passed|failed`) — filter runs by status across all projects.
+
+Response:
+```json
+{
+  "groups": [
+    {
+      "groupName": "platform-team",
+      "projects": [
+        {
+          "projectId": "5d6e8f6d-f1c8-4f3f-8c93-caf78e7a6a34",
+          "projectName": "repo-service",
+          "projectKey": "org/repo-service",
+          "runs": [
+            {
+              "id": "1afef22f-2f8f-42de-9f48-f2a11f32a044",
+              "branch": "main",
+              "commitSha": "a1b2c3d4",
+              "runTimestamp": "2026-04-25T12:00:00Z",
+              "passRatePercent": 96.67,
+              "status": "failed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "groupName": "",
+      "projects": [
+        {
+          "projectId": "9a1b2c3d-0000-4000-8000-000000000001",
+          "projectName": "ungrouped-service",
+          "projectKey": "org/ungrouped-service",
+          "runs": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+Behavior:
+1. Returns all projects that have at least one integration run, grouped by their `group` field.
+2. Groups are ordered alphabetically by `groupName`; projects within a group are ordered alphabetically by `projectName`.
+3. Projects with no `group` value are collected into a group with `groupName: ""` placed last.
+4. Runs within each project are ordered newest first.
+5. Projects with no matching runs after filter application are omitted from the response (and their group is omitted if it becomes empty).
+6. Requires API key auth.
+
 ## 8. Frontend Specification
 
 ### 8.0 Navigation Model
@@ -284,11 +339,26 @@ Returns one run with full failed spec list and summary metrics.
 5. Dedicated integration screen includes a horizontal run-chain graphic where each node is a run, ordered newest-to-oldest, colored green for `passed` and red for `failed`.
 6. Clicking a run-chain node selects that run and updates the failed-spec details pane.
 
-### 8.3 Frontend Proxy Routes
-Add frontend server proxy routes:
+### 8.3 Integration Heatmap (All-Project View)
+1. Dedicated integration screen includes an `Integration Heatmap` region that visualizes recent integration runs for **all projects simultaneously**, organized by project group.
+2. Heatmap layout: projects are grouped by their `group` field. Each group is rendered as a labeled section. Within each group, one row per project; one tile per run. Runs are ordered newest-to-oldest within each project row.
+3. Groups are ordered alphabetically. Projects within a group are ordered alphabetically. Projects with no group appear in an unlabeled section at the bottom.
+4. Heatmap data source is `GET /api/integration-test-runs/heatmap` — the dedicated all-project aggregated endpoint (see §7.4).
+5. The heatmap `branch` and `status` filters are independent from the per-project run table filters. The `runsPerProject` count is controlled by the frontend and optimized for visualization density (default 10).
+6. Tile color semantics:
+  - green scale for `passed`
+  - red scale for `failed`
+7. Tile intensity should reflect quality signal (for example pass rate), while preserving pass/fail color family.
+8. Hover/focus state must show at minimum: project name, group, run id, branch, commit sha, timestamp, status, pass rate.
+9. Clicking a heatmap tile for the currently selected project must synchronize selected run state with the run chain, run table, and failed-spec details. Clicking a tile for a different project may switch the active project selection.
+10. Heatmap must respond to its own branch/status filters and reload independently from the per-project run table.
+
+### 8.4 Frontend Proxy Routes
+The following proxy routes are required:
 1. `GET /api/projects/{projectId}/integration-test-runs`
 2. `GET /api/projects/{projectId}/integration-test-runs/latest-comparison`
 3. `GET /api/projects/{projectId}/integration-test-runs/{runId}`
+4. `GET /api/integration-test-runs/heatmap` — new route required for the all-project heatmap; must be proxied to `GET /v1/integration-test-runs/heatmap` with API key injected.
 
 ## 9. Ginkgo Execution and Artifact Contract
 
@@ -410,6 +480,7 @@ Standard codes:
 9. `coveragecli` supports integration test report upload to `POST /v1/integration-test-runs`.
 10. Frontend exposes a dedicated integration tests route reachable from the main page.
 11. Users can navigate from integration screen back to the homepage via explicit UI control.
+12. Integration screen includes an all-project heatmap powered by `GET /v1/integration-test-runs/heatmap`, displaying one row per project with pass/fail color semantics and synchronized selection behavior with run details for the active project.
 
 ## 15. Rollout Notes
 
