@@ -190,6 +190,11 @@ h3 {
   border-color: var(--cyan);
 }
 
+.btn-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
 .project-list {
   list-style: none;
   margin: 0;

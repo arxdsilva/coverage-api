@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Coverage Integration Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <main id="appShell" class="app-shell">
+      <aside class="sidebar card">
+        <div class="sidebar-header">
+          <button id="toggleSidebar" class="btn sidebar-toggle" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar" aria-controls="projectSelector projectSearchInput">◂</button>
+          <p class="eyebrow">Open Coverage</p>
+          <h1>Integration Tests</h1>
+          <a class="btn btn-link" href="/">Back to Home</a>
+          <button id="refreshProjects" class="btn">Refresh</button>
+        </div>
+        <article class="card project-selector-card">
+          <div class="project-selector-head">
+            <p class="eyebrow">Select Project</p>
+          </div>
+          <input
+            id="projectSearchInput"
+            type="text"
+            class="project-search"
+            placeholder="Search projects..."
+            autocomplete="off"
+          />
+          <select id="projectSelector" class="project-select">
+            <option value="">Loading projects...</option>
+          </select>
+        </article>
+      </aside>
+
+      <section class="content">
+        <section class="integration-screen card">
+          <div class="integration-screen-head">
+            <div>
+              <p class="eyebrow">Integration Tests</p>
+              <h3 id="integrationScreenProjectTitle">Select a project</h3>
+              <p id="integrationScreenProjectMeta" class="muted">No project selected</p>
+            </div>
+          </div>
+
+          <div class="integration-stats-grid">
+            <article class="card stat">
+              <p class="label">Status</p>
+              <p id="integrationStatus" class="value">-</p>
+            </article>
+            <article class="card stat">
+              <p class="label">Pass Rate</p>
+              <p id="integrationPassRate" class="value">-</p>
+            </article>
+            <article class="card stat">
+              <p class="label">Failed Specs</p>
+              <p id="integrationFailedSpecsCount" class="value">-</p>
+            </article>
+            <article class="card stat">
+              <p class="label">Delta</p>
+              <p id="integrationDelta" class="value">-</p>
+            </article>
+            <article class="card stat">
+              <p class="label">Duration</p>
+              <p id="integrationDuration" class="value">-</p>
+            </article>
+          </div>
+
+          <div class="integration-filters">
+            <select id="integrationBranchFilter" class="branch-select">
+              <option value="">All branches</option>
+            </select>
+            <select id="integrationStatusFilter" class="branch-select">
+              <option value="">All statuses</option>
+              <option value="passed">passed</option>
+              <option value="failed">failed</option>
+            </select>
+            <button id="integrationReload" class="btn">Reload</button>
+          </div>
+
+          <section class="tables-grid integration-tables-grid">
+            <article class="card table-card">
+              <div class="table-head">
+                <h3>Integration Runs</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Run</th>
+                      <th>Branch</th>
+                      <th>Commit</th>
+                      <th>Status</th>
+                      <th>Pass Rate</th>
+                      <th>Failed</th>
+                      <th>Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody id="integrationRunsBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="card table-card">
+              <div class="table-head">
+                <h3>Failed Specs (Selected Run)</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Spec Path</th>
+                      <th>Message</th>
+                      <th>File</th>
+                      <th>Line</th>
+                    </tr>
+                  </thead>
+                  <tbody id="integrationFailedSpecsBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="/assets/integration.js"></script>
+  </body>
+</html>

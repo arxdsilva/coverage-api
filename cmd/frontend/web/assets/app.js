@@ -30,25 +30,6 @@ const appShell = document.getElementById('appShell');
 const toggleSidebar = document.getElementById('toggleSidebar');
 const appVersion = document.getElementById('appVersion');
 const upgradeLink = document.getElementById('upgradeLink');
-const openIntegrationScreen = document.getElementById('openIntegrationScreen');
-const backToHomeFromIntegration = document.getElementById('backToHomeFromIntegration');
-const homeOverview = document.getElementById('homeOverview');
-const homeStats = document.getElementById('homeStats');
-const homeContext = document.getElementById('homeContext');
-const homeTables = document.getElementById('homeTables');
-const integrationScreen = document.getElementById('integrationScreen');
-const integrationScreenProjectTitle = document.getElementById('integrationScreenProjectTitle');
-const integrationScreenProjectMeta = document.getElementById('integrationScreenProjectMeta');
-const integrationStatus = document.getElementById('integrationStatus');
-const integrationPassRate = document.getElementById('integrationPassRate');
-const integrationFailedSpecsCount = document.getElementById('integrationFailedSpecsCount');
-const integrationDelta = document.getElementById('integrationDelta');
-const integrationDuration = document.getElementById('integrationDuration');
-const integrationBranchFilter = document.getElementById('integrationBranchFilter');
-const integrationStatusFilter = document.getElementById('integrationStatusFilter');
-const integrationReload = document.getElementById('integrationReload');
-const integrationRunsBody = document.getElementById('integrationRunsBody');
-const integrationFailedSpecsBody = document.getElementById('integrationFailedSpecsBody');
 
 let projects = [];
 let allProjects = [];
@@ -62,7 +43,6 @@ let trendChart = null;
 let heatmapLayoutFrame = 0;
 let contributorsLayoutFrame = 0;
 let trendRequestSequence = 0;
-let selectedIntegrationRunId = null;
 const sidebarCollapsedKey = 'opencoverage.sidebarCollapsed';
 
 refreshProjects.addEventListener('click', () => loadProjects());
@@ -86,8 +66,6 @@ openContributors.addEventListener('click', async () => {
   await loadAllContributors();
 });
 closeContributors.addEventListener('click', () => toggleContributorsOverlay(false));
-openIntegrationScreen.addEventListener('click', () => navigateToIntegration());
-backToHomeFromIntegration.addEventListener('click', () => navigateToHome());
 projectSelector.addEventListener('change', async (e) => {
   await selectProject(e.target.value);
 });
@@ -98,26 +76,13 @@ branchSelector.addEventListener('change', async (e) => {
   selectedBranch = e.target.value;
   await loadLatestComparison(selectedProjectId);
 });
-integrationBranchFilter.addEventListener('change', async () => {
-  await loadIntegrationRuns(selectedProjectId);
-});
-integrationStatusFilter.addEventListener('change', async () => {
-  await loadIntegrationRuns(selectedProjectId);
-});
-integrationReload.addEventListener('click', async () => {
-  await loadIntegrationScreen(selectedProjectId);
-});
 window.addEventListener('resize', () => {
   scheduleHeatmapLayout();
   scheduleContributorsLayout();
 });
-window.addEventListener('popstate', () => {
-  applyRoute();
-});
 
 initializeSidebarState();
 loadAppMeta();
-applyRoute();
 
 function toggleHeatmapOverlay(open) {
   if (open) {
@@ -156,45 +121,6 @@ function setSidebarCollapsed(collapsed) {
   toggleSidebar.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
   toggleSidebar.setAttribute('aria-expanded', String(!collapsed));
   window.localStorage.setItem(sidebarCollapsedKey, String(collapsed));
-}
-
-function routeNameFromPath(pathname) {
-  return pathname === '/integration' ? 'integration' : 'home';
-}
-
-function currentRoute() {
-  return routeNameFromPath(window.location.pathname);
-}
-
-function navigateToHome() {
-  if (currentRoute() !== 'home') {
-    history.pushState({}, '', '/');
-  }
-  applyRoute();
-}
-
-function navigateToIntegration() {
-  if (currentRoute() !== 'integration') {
-    history.pushState({}, '', '/integration');
-  }
-  applyRoute();
-}
-
-function applyRoute() {
-  const integration = currentRoute() === 'integration';
-  const homeSections = [homeOverview, homeStats, homeContext, homeTables];
-  for (const section of homeSections) {
-    section.hidden = integration;
-  }
-  integrationScreen.hidden = !integration;
-
-  if (integration) {
-    toggleHeatmapOverlay(false);
-    toggleContributorsOverlay(false);
-    if (selectedProjectId) {
-      loadIntegrationScreen(selectedProjectId);
-    }
-  }
 }
 
 async function loadAppMeta() {
@@ -307,14 +233,9 @@ async function selectProject(projectId) {
 
   const defaultBranch = project?.defaultBranch || 'main';
   const branches = await loadBranches(projectId);
-  renderIntegrationBranchFilter(branches);
   const threshold = Number(project?.globalThresholdPercent);
   await Promise.all([loadRecentRuns(projectId), loadTrendChart(projectId, defaultBranch, branches, threshold)]);
   await loadLatestComparison(projectId);
-
-  if (currentRoute() === 'integration') {
-    await loadIntegrationScreen(projectId);
-  }
 }
 
 async function loadAllContributors() {
@@ -1173,139 +1094,6 @@ async function loadRecentRuns(projectId) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td colspan="5" class="muted">${err.message}</td>`;
     runsBody.appendChild(tr);
-  }
-}
-
-function renderIntegrationBranchFilter(branches = []) {
-  if (!integrationBranchFilter) return;
-  const selectedValue = integrationBranchFilter.value;
-  integrationBranchFilter.innerHTML = '<option value="">All branches</option>';
-
-  for (const branch of branches) {
-    const option = document.createElement('option');
-    option.value = branch;
-    option.textContent = branch;
-    integrationBranchFilter.appendChild(option);
-  }
-
-  integrationBranchFilter.value = branches.includes(selectedValue) ? selectedValue : '';
-}
-
-async function loadIntegrationScreen(projectId) {
-  if (!projectId) {
-    integrationScreenProjectTitle.textContent = 'Select a project';
-    integrationScreenProjectMeta.textContent = 'No project selected';
-    integrationRunsBody.innerHTML = '<tr><td colspan="7" class="muted">Select a project first.</td></tr>';
-    integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">No run selected.</td></tr>';
-    return;
-  }
-
-  const project = getProjectById(projectId);
-  integrationScreenProjectTitle.textContent = project?.name || project?.projectKey || 'Project';
-  integrationScreenProjectMeta.textContent = `${project?.projectKey || ''} - default branch: ${project?.defaultBranch || 'main'}`;
-
-  await Promise.all([loadIntegrationLatestComparison(projectId), loadIntegrationRuns(projectId)]);
-}
-
-async function loadIntegrationLatestComparison(projectId) {
-  try {
-    const res = await fetch(`/api/projects/${projectId}/integration-test-runs/latest-comparison`);
-    if (!res.ok) throw new Error(`failed to load integration comparison (${res.status})`);
-    const data = await res.json();
-
-    integrationStatus.textContent = (data.run?.status || '-').toUpperCase();
-    integrationStatus.className = `value ${data.run?.status === 'passed' ? 'passed' : 'failed'}`;
-    integrationPassRate.textContent = pct(data.run?.passRatePercent);
-    integrationFailedSpecsCount.textContent = String(data.run?.failedSpecs ?? '-');
-    integrationDelta.textContent = data.comparison?.deltaPercent == null ? '-' : signedPct(data.comparison.deltaPercent);
-    integrationDuration.textContent = data.run?.durationMs == null ? '-' : `${Math.round(data.run.durationMs / 1000)}s`;
-  } catch (err) {
-    integrationStatus.textContent = 'ERROR';
-    integrationStatus.className = 'value failed';
-    integrationPassRate.textContent = '-';
-    integrationFailedSpecsCount.textContent = '-';
-    integrationDelta.textContent = '-';
-    integrationDuration.textContent = '-';
-  }
-}
-
-async function loadIntegrationRuns(projectId) {
-  integrationRunsBody.innerHTML = '';
-  selectedIntegrationRunId = null;
-
-  try {
-    const url = new URL(`/api/projects/${projectId}/integration-test-runs`, window.location.origin);
-    url.searchParams.set('page', '1');
-    url.searchParams.set('pageSize', '20');
-    if (integrationBranchFilter.value) {
-      url.searchParams.set('branch', integrationBranchFilter.value);
-    }
-    if (integrationStatusFilter.value) {
-      url.searchParams.set('status', integrationStatusFilter.value);
-    }
-
-    const res = await fetch(url.toString());
-    if (!res.ok) throw new Error(`failed to load integration runs (${res.status})`);
-    const data = await res.json();
-    const items = data.items || [];
-
-    for (const run of items) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="code">${run.id}</td>
-        <td>${run.branch}</td>
-        <td class="code">${run.commitSha}</td>
-        <td class="${run.status === 'passed' ? 'up' : 'down'}">${run.status}</td>
-        <td>${pct(run.passRatePercent)}</td>
-        <td>${run.failedSpecs}</td>
-        <td>${new Date(run.runTimestamp).toLocaleString()}</td>
-      `;
-      tr.addEventListener('click', async () => {
-        selectedIntegrationRunId = run.id;
-        await loadIntegrationRunDetails(projectId, run.id);
-      });
-      integrationRunsBody.appendChild(tr);
-    }
-
-    if (items.length === 0) {
-      integrationRunsBody.innerHTML = '<tr><td colspan="7" class="muted">No integration runs found.</td></tr>';
-      integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">No run selected.</td></tr>';
-      return;
-    }
-
-    selectedIntegrationRunId = items[0].id;
-    await loadIntegrationRunDetails(projectId, selectedIntegrationRunId);
-  } catch (err) {
-    integrationRunsBody.innerHTML = `<tr><td colspan="7" class="muted">${err.message}</td></tr>`;
-    integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">Failed to load selected run details.</td></tr>';
-  }
-}
-
-async function loadIntegrationRunDetails(projectId, runId) {
-  integrationFailedSpecsBody.innerHTML = '';
-  try {
-    const res = await fetch(`/api/projects/${projectId}/integration-test-runs/${runId}`);
-    if (!res.ok) throw new Error(`failed to load integration run details (${res.status})`);
-    const data = await res.json();
-    const failedSpecs = data.failedSpecs || [];
-
-    if (failedSpecs.length === 0) {
-      integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">No failed specs for this run.</td></tr>';
-      return;
-    }
-
-    for (const failed of failedSpecs) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="code">${escapeHtml(failed.specPath || '-')}</td>
-        <td>${escapeHtml(failed.failureMessage || '-')}</td>
-        <td class="code">${escapeHtml(failed.file || '-')}</td>
-        <td>${failed.line || '-'}</td>
-      `;
-      integrationFailedSpecsBody.appendChild(tr);
-    }
-  } catch (err) {
-    integrationFailedSpecsBody.innerHTML = `<tr><td colspan="4" class="muted">${err.message}</td></tr>`;
   }
 }
 

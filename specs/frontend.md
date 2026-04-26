@@ -26,6 +26,22 @@ Current behavior:
 
 The branch selector below the overview card does **not** filter the trend graph. It controls the latest comparison panel and package comparison table only.
 
+## Integration Screen Navigation
+
+Integration test views are available on a dedicated frontend route:
+
+- `/integration`
+
+Navigation behavior:
+
+1. The main dashboard includes an `Integration Tests` control in the sidebar that navigates to `/integration`.
+2. The integration screen includes a `Back to Home` control that navigates to `/`.
+3. Home and integration are fully separate frontend documents and scripts:
+	- `/` serves `index.html` with `assets/app.js`
+	- `/integration` serves `integration.html` with `assets/integration.js`
+4. Browser back/forward navigation between `/` and `/integration` is supported.
+5. Navigation works even when JavaScript fails to initialize because these controls are real links (`<a href=...>`).
+
 ## No User Authentication
 
 The frontend does not require user login/auth.
@@ -40,9 +56,11 @@ How it works:
 ## Folder Structure
 
 - `cmd/frontend/main.go` - frontend server and API proxy
-- `cmd/frontend/web/index.html` - app shell
+- `cmd/frontend/web/index.html` - coverage dashboard shell
+- `cmd/frontend/web/integration.html` - integration dashboard shell
 - `cmd/frontend/web/assets/styles.css` - dark theme styles
-- `cmd/frontend/web/assets/app.js` - UI logic and API calls
+- `cmd/frontend/web/assets/app.js` - home coverage UI logic and API calls
+- `cmd/frontend/web/assets/integration.js` - integration UI logic and API calls
 
 ## Configuration
 

@@ -21,7 +21,7 @@
           <button id="refreshProjects" class="btn">Refresh</button>
           <button id="openHeatmap" class="btn">Open Heatmap</button>
           <button id="openContributors" class="btn">Top Contributors</button>
-          <button id="openIntegrationScreen" class="btn">Integration Tests</button>
+          <a id="openIntegrationScreen" class="btn btn-link" href="/integration">Integration Tests</a>
         </div>
         <article class="card project-selector-card">
           <div class="project-selector-head">
@@ -61,95 +61,6 @@
               <canvas id="trendChart"></canvas>
             </div>
           </article>
-        </section>
-
-        <section id="integrationScreen" class="integration-screen card" hidden>
-          <div class="integration-screen-head">
-            <div>
-              <p class="eyebrow">Integration Tests</p>
-              <h3 id="integrationScreenProjectTitle">Select a project</h3>
-              <p id="integrationScreenProjectMeta" class="muted">No project selected</p>
-            </div>
-            <button id="backToHomeFromIntegration" class="btn">Back to Home</button>
-          </div>
-
-          <div class="integration-stats-grid">
-            <article class="card stat">
-              <p class="label">Status</p>
-              <p id="integrationStatus" class="value">-</p>
-            </article>
-            <article class="card stat">
-              <p class="label">Pass Rate</p>
-              <p id="integrationPassRate" class="value">-</p>
-            </article>
-            <article class="card stat">
-              <p class="label">Failed Specs</p>
-              <p id="integrationFailedSpecsCount" class="value">-</p>
-            </article>
-            <article class="card stat">
-              <p class="label">Delta</p>
-              <p id="integrationDelta" class="value">-</p>
-            </article>
-            <article class="card stat">
-              <p class="label">Duration</p>
-              <p id="integrationDuration" class="value">-</p>
-            </article>
-          </div>
-
-          <div class="integration-filters">
-            <select id="integrationBranchFilter" class="branch-select">
-              <option value="">All branches</option>
-            </select>
-            <select id="integrationStatusFilter" class="branch-select">
-              <option value="">All statuses</option>
-              <option value="passed">passed</option>
-              <option value="failed">failed</option>
-            </select>
-            <button id="integrationReload" class="btn">Reload</button>
-          </div>
-
-          <section class="tables-grid integration-tables-grid">
-            <article class="card table-card">
-              <div class="table-head">
-                <h3>Integration Runs</h3>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Run</th>
-                      <th>Branch</th>
-                      <th>Commit</th>
-                      <th>Status</th>
-                      <th>Pass Rate</th>
-                      <th>Failed</th>
-                      <th>Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody id="integrationRunsBody"></tbody>
-                </table>
-              </div>
-            </article>
-
-            <article class="card table-card">
-              <div class="table-head">
-                <h3>Failed Specs (Selected Run)</h3>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Spec Path</th>
-                      <th>Message</th>
-                      <th>File</th>
-                      <th>Line</th>
-                    </tr>
-                  </thead>
-                  <tbody id="integrationFailedSpecsBody"></tbody>
-                </table>
-              </div>
-            </article>
-          </section>
         </section>
 
         <section id="homeStats" class="stats-grid">

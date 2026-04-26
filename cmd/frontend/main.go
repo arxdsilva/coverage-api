@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-//go:embed web/index.html web/assets/*
+//go:embed web/index.html web/integration.html web/assets/*
 var embeddedFrontend embed.FS
 
 type config struct {
@@ -47,11 +47,14 @@ func main() {
 	mux.Handle("/assets/", http.StripPrefix("/", http.FileServer(http.FS(frontendFS))))
 	mux.HandleFunc("/api/app-meta", appMetaHandler(cfg))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" && r.URL.Path != "/integration" {
+		switch r.URL.Path {
+		case "/":
+			serveEmbeddedFile(w, http.FS(frontendFS), "index.html")
+		case "/integration":
+			serveEmbeddedFile(w, http.FS(frontendFS), "integration.html")
+		default:
 			http.NotFound(w, r)
-			return
 		}
-		serveEmbeddedFile(w, http.FS(frontendFS), "index.html")
 	})
 
 	mux.HandleFunc("/api/projects", proxyHandler(cfg))
