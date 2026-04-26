@@ -577,7 +577,6 @@ async function loadIntegrationLatestComparison(projectId) {
 
     integrationStatus.textContent = (data.run?.status || '-').toUpperCase();
     integrationStatus.className = `value ${data.run?.status === 'passed' ? 'passed' : 'failed'}`;
-    integrationPassRate.textContent = pct(data.run?.passRatePercent);
     integrationFailedSpecsCount.textContent = String(data.run?.failedSpecs ?? '-');
     integrationDelta.textContent = data.comparison?.deltaPercent == null ? '-' : signedPct(data.comparison.deltaPercent);
     integrationDuration.textContent = data.run?.durationMs == null ? '-' : `${Math.round(data.run.durationMs / 1000)}s`;
@@ -615,6 +614,15 @@ async function loadIntegrationRuns(projectId, preferredRunId = null) {
     const items = data.items || [];
 
     currentIntegrationRunItems = items;
+    const passRateValues = items
+      .map((run) => Number(run.passRatePercent))
+      .filter((value) => Number.isFinite(value));
+    if (passRateValues.length > 0) {
+      const averagePassRate = passRateValues.reduce((sum, value) => sum + value, 0) / passRateValues.length;
+      integrationPassRate.textContent = pct(averagePassRate);
+    } else {
+      integrationPassRate.textContent = '-';
+    }
 
     if (items.length === 0) {
       selectedIntegrationRunId = null;
@@ -659,6 +667,7 @@ async function loadIntegrationRuns(projectId, preferredRunId = null) {
     integrationRunChain.innerHTML = `<p class="muted">${err.message}</p>`;
     integrationRunsBody.innerHTML = `<tr><td colspan="7" class="muted">${err.message}</td></tr>`;
     integrationFailedSpecsBody.innerHTML = '<tr><td colspan="4" class="muted">Failed to load selected run details.</td></tr>';
+    integrationPassRate.textContent = '-';
   }
 }
 
