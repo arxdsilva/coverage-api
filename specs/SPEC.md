@@ -485,3 +485,13 @@ paths:
 3. Branch-specific baseline mode.
 4. Webhook callbacks for failed threshold events.
 5. Retention policies and archive tiers.
+
+## 15. Integration Test Extension
+
+Integration test ingestion and visualization are specified separately in `specs/INTEGRATION_TESTS.md`.
+
+That extension defines:
+1. Ginkgo JSON report ingestion contract.
+2. Integration test run persistence and comparison model.
+3. API endpoints under `/v1/.../integration-test-runs`.
+4. Frontend integration test health and failed-specs views.
