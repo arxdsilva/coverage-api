@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arxdsilva/opencoverage/internal/application"
 	"github.com/arxdsilva/opencoverage/internal/domain"
 
 	"github.com/jackc/pgx/v5"
@@ -284,4 +285,91 @@ func (r *IntegrationTestRunRepository) ListByProject(ctx context.Context, projec
 	}
 
 	return runs, total, nil
+}
+
+func (r *IntegrationTestRunRepository) HeatmapData(ctx context.Context, branch string, status string, runsPerProject int) ([]application.IntegrationHeatmapRow, error) {
+	q := getQuerier(ctx, r.pool)
+
+	where := "WHERE 1=1"
+	args := []any{}
+	idx := 1
+
+	if branch != "" {
+		where += fmt.Sprintf(" AND itr.branch = $%d", idx)
+		args = append(args, branch)
+		idx++
+	}
+	if status != "" {
+		where += fmt.Sprintf(" AND itr.status = $%d", idx)
+		args = append(args, status)
+		idx++
+	}
+
+	args = append(args, runsPerProject)
+
+	sql := fmt.Sprintf(`
+		WITH ranked AS (
+			SELECT
+				itr.id              AS run_id,
+				itr.project_id,
+				itr.branch,
+				itr.commit_sha,
+				itr.run_timestamp,
+				itr.passed_specs,
+				itr.total_specs,
+				itr.status,
+				COALESCE(p.name, '')        AS project_name,
+				p.project_key,
+				COALESCE(p.group_name, '')  AS project_group,
+				ROW_NUMBER() OVER (
+					PARTITION BY itr.project_id
+					ORDER BY itr.run_timestamp DESC, itr.created_at DESC
+				) AS rn
+			FROM integration_test_runs itr
+			JOIN projects p ON p.id = itr.project_id
+			%s
+		)
+		SELECT run_id, project_id, project_name, project_key, project_group,
+		       branch, commit_sha, run_timestamp, passed_specs, total_specs, status
+		FROM ranked
+		WHERE rn <= $%d
+		ORDER BY
+			CASE WHEN project_group = '' THEN 1 ELSE 0 END ASC,
+			project_group ASC,
+			project_name ASC,
+			run_timestamp DESC
+	`, where, idx)
+
+	rows, err := q.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query heatmap data: %w", err)
+	}
+	defer rows.Close()
+
+	result := make([]application.IntegrationHeatmapRow, 0)
+	for rows.Next() {
+		var row application.IntegrationHeatmapRow
+		if err := rows.Scan(
+			&row.RunID,
+			&row.ProjectID,
+			&row.ProjectName,
+			&row.ProjectKey,
+			&row.ProjectGroup,
+			&row.Branch,
+			&row.CommitSHA,
+			&row.RunTimestamp,
+			&row.PassedSpecs,
+			&row.TotalSpecs,
+			&row.Status,
+		); err != nil {
+			return nil, fmt.Errorf("scan heatmap row: %w", err)
+		}
+		result = append(result, row)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate heatmap rows: %w", err)
+	}
+
+	return result, nil
 }

@@ -73,6 +73,7 @@ func main() {
 	latestComparisonUC := application.NewGetLatestComparisonUseCase(projectRepo, runRepo, packageRepo)
 	latestIntegrationComparisonUC := application.NewGetLatestIntegrationComparisonUseCase(projectRepo, integrationRunRepo, integrationSpecRepo)
 	getIntegrationRunUC := application.NewGetIntegrationRunUseCase(integrationRunRepo, integrationSpecRepo)
+	getIntegrationHeatmapUC := application.NewGetIntegrationHeatmapUseCase(integrationRunRepo)
 	listBranchesUC := application.NewListBranchesUseCase(runRepo)
 	listContributorsUC := application.NewListContributorsUseCase(projectRepo, runRepo)
 
@@ -86,6 +87,7 @@ func main() {
 		latestComparisonUC,
 		latestIntegrationComparisonUC,
 		getIntegrationRunUC,
+		getIntegrationHeatmapUC,
 		listBranchesUC,
 		listContributorsUC,
 	)

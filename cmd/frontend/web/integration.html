@@ -17,6 +17,7 @@
           <button id="toggleSidebar" class="btn sidebar-toggle" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar" aria-controls="projectSelector projectSearchInput">◂</button>
           <p class="eyebrow">Open Coverage</p>
           <h1>Integration Tests</h1>
+          <button id="openIntegrationHeatmap" class="btn">Open Heatmap</button>
           <a class="btn btn-link" href="/">Back to Home</a>
           <button id="refreshProjects" class="btn">Refresh</button>
         </div>
@@ -130,6 +131,32 @@
                   <tbody id="integrationFailedSpecsBody"></tbody>
                 </table>
               </div>
+            </article>
+          </section>
+
+          <section id="integrationHeatmapOverlay" class="heatmap-overlay" aria-hidden="true">
+            <article class="card integration-heatmap-overlay-card">
+              <div class="heatmap-overlay-head">
+                <div class="table-head heatmap-head">
+                  <h3>Integration Heatmap</h3>
+                  <p class="muted">All projects by group. Green = pass, red = fail. Hover for details.</p>
+                </div>
+                <div class="heatmap-overlay-tools integration-heatmap-tools">
+                  <div class="integration-filters">
+                    <select id="heatmapBranchFilter" class="branch-select">
+                      <option value="">All branches</option>
+                    </select>
+                    <select id="heatmapStatusFilter" class="branch-select">
+                      <option value="">All statuses</option>
+                      <option value="passed">passed</option>
+                      <option value="failed">failed</option>
+                    </select>
+                    <button id="heatmapReload" class="btn">Reload</button>
+                    <button id="closeIntegrationHeatmap" class="btn">Close</button>
+                  </div>
+                </div>
+              </div>
+              <div id="integrationHeatmap" class="integration-heatmap-body integration-heatmap-overlay-body"></div>
             </article>
           </section>
         </section>

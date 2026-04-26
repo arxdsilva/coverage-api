@@ -245,18 +245,19 @@ h3 {
 
 .content {
   position: relative;
-  display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr);
-  gap: 16px;
   min-height: 0;
   overflow: hidden;
+  /* gap: 16px; */
+  /* display: grid; */
 }
 
 .integration-screen {
   padding: 14px;
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   gap: 12px;
+  height: 100%;
   min-height: 0;
 }
 
@@ -353,6 +354,142 @@ h3 {
   font-size: 10px;
   color: var(--text-soft);
   font-family: "JetBrains Mono", monospace;
+}
+
+/* Integration Heatmap */
+
+.integration-heatmap-card {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.integration-heatmap-overlay-card {
+  height: 100%;
+  padding: 12px;
+  border: 1px solid rgba(67, 246, 166, 0.45);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.integration-heatmap-overlay-body {
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(15, 21, 34, 0.92), rgba(19, 27, 43, 0.86));
+}
+
+.integration-heatmap-tools {
+  justify-items: stretch;
+}
+
+.integration-heatmap-tools .integration-filters {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.integration-heatmap-body {
+  max-height: 220px;
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  padding: 4px;
+}
+
+.integration-heatmap-group {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, rgba(30, 50, 80, 0.3), rgba(20, 35, 60, 0.2));
+}
+
+.integration-heatmap-group-name {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.integration-heatmap-project-row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 32px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(39, 52, 81, 0.5);
+  background: rgba(14, 20, 35, 0.7);
+}
+
+.integration-heatmap-project-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cyan);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.integration-heatmap-tiles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.integration-heatmap-tile {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0;
+  background: none;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+  transition: transform 100ms ease, box-shadow 100ms ease, opacity 100ms ease, border-color 100ms ease;
+  opacity: 0.72;
+}
+
+.integration-heatmap-tile.passed {
+  background: var(--green);
+}
+
+.integration-heatmap-tile.failed {
+  background: var(--red);
+}
+
+.integration-heatmap-tile:hover {
+  opacity: 1;
+  transform: scale(1.25);
+}
+
+.integration-heatmap-tile.selected {
+  opacity: 1;
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px rgba(20, 216, 255, 0.35);
+  transform: scale(1.15);
+}
+
+@media (max-width: 900px) {
+  .integration-heatmap-project-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
 }
 
 .table-wrap tr.selected-row {
@@ -1487,6 +1624,43 @@ th {
 
 .contributors-overlay-card {
   border-color: rgba(31, 157, 98, 0.28);
+}
+
+.integration-heatmap-overlay-card {
+  border-color: rgba(31, 157, 98, 0.24);
+}
+
+.integration-heatmap-overlay-body {
+  border-color: #d6e2f3;
+  background: #f8fbff;
+}
+
+.integration-heatmap-group {
+  border-color: #d6e2f3;
+  background: linear-gradient(180deg, #ffffff, #f5f9ff);
+}
+
+.integration-heatmap-group-name {
+  border-bottom-color: #dfe8f5;
+}
+
+.integration-heatmap-project-row {
+  border-color: #d7e3f2;
+  background: #ffffff;
+}
+
+.integration-heatmap-project-name {
+  color: #2563eb;
+}
+
+.integration-heatmap-tile {
+  border-color: rgba(37, 99, 235, 0.08);
+  box-shadow: inset 0 -1px 0 rgba(17, 24, 39, 0.08);
+}
+
+.integration-heatmap-tile.selected {
+  border-color: rgba(37, 99, 235, 0.65);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.16);
 }
 
 .heat-tile,

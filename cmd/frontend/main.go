@@ -59,6 +59,8 @@ func main() {
 
 	mux.HandleFunc("/api/projects", proxyHandler(cfg))
 	mux.HandleFunc("/api/projects/", proxyHandler(cfg))
+	mux.HandleFunc("/api/integration-test-runs", proxyHandler(cfg))
+	mux.HandleFunc("/api/integration-test-runs/", proxyHandler(cfg))
 
 	server := &http.Server{
 		Addr:         cfg.Addr,

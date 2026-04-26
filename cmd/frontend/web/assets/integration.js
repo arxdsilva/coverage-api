@@ -14,6 +14,13 @@ const integrationReload = document.getElementById('integrationReload');
 const integrationRunChain = document.getElementById('integrationRunChain');
 const integrationRunsBody = document.getElementById('integrationRunsBody');
 const integrationFailedSpecsBody = document.getElementById('integrationFailedSpecsBody');
+const openIntegrationHeatmap = document.getElementById('openIntegrationHeatmap');
+const closeIntegrationHeatmap = document.getElementById('closeIntegrationHeatmap');
+const integrationHeatmapOverlay = document.getElementById('integrationHeatmapOverlay');
+const heatmapBranchFilter = document.getElementById('heatmapBranchFilter');
+const heatmapStatusFilter = document.getElementById('heatmapStatusFilter');
+const heatmapReload = document.getElementById('heatmapReload');
+const integrationHeatmap = document.getElementById('integrationHeatmap');
 const appShell = document.getElementById('appShell');
 const toggleSidebar = document.getElementById('toggleSidebar');
 
@@ -21,6 +28,7 @@ let projects = [];
 let filteredProjects = [];
 let selectedProjectId = null;
 let selectedIntegrationRunId = null;
+let currentIntegrationRunItems = [];
 const sidebarCollapsedKey = 'opencoverage.sidebarCollapsed.integration';
 
 refreshProjects.addEventListener('click', () => loadProjects());
@@ -39,6 +47,23 @@ integrationStatusFilter.addEventListener('change', async () => {
 integrationReload.addEventListener('click', async () => {
   await loadIntegrationScreen(selectedProjectId);
 });
+openIntegrationHeatmap.addEventListener('click', async () => {
+  const isOpen = integrationHeatmapOverlay.classList.contains('open');
+  toggleIntegrationHeatmapOverlay(!isOpen);
+  if (!isOpen) {
+    await loadHeatmap();
+  }
+});
+closeIntegrationHeatmap.addEventListener('click', () => toggleIntegrationHeatmapOverlay(false));
+heatmapBranchFilter.addEventListener('change', async () => {
+  await loadHeatmap();
+});
+heatmapStatusFilter.addEventListener('change', async () => {
+  await loadHeatmap();
+});
+heatmapReload.addEventListener('click', async () => {
+  await loadHeatmap();
+});
 toggleSidebar.addEventListener('click', () => {
   const shouldCollapse = !appShell.classList.contains('sidebar-collapsed');
   setSidebarCollapsed(shouldCollapse);
@@ -46,6 +71,11 @@ toggleSidebar.addEventListener('click', () => {
 
 initializeSidebarState();
 loadProjects();
+
+function toggleIntegrationHeatmapOverlay(open) {
+  integrationHeatmapOverlay.classList.toggle('open', open);
+  integrationHeatmapOverlay.setAttribute('aria-hidden', String(!open));
+}
 
 function initializeSidebarState() {
   const persisted = window.localStorage.getItem(sidebarCollapsedKey);
@@ -191,6 +221,7 @@ async function loadIntegrationRuns(projectId) {
   integrationRunChain.innerHTML = '';
   integrationRunsBody.innerHTML = '';
   selectedIntegrationRunId = null;
+  currentIntegrationRunItems = [];
 
   try {
     const url = new URL(`/api/projects/${projectId}/integration-test-runs`, window.location.origin);
@@ -208,6 +239,7 @@ async function loadIntegrationRuns(projectId) {
     const data = await res.json();
     const items = data.items || [];
 
+    currentIntegrationRunItems = items;
     renderIntegrationRunChain(items);
 
     for (const run of items) {
@@ -360,4 +392,97 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+async function loadHeatmap() {
+  integrationHeatmap.innerHTML = '<p class="muted">Loading heatmap…</p>';
+  try {
+    const url = new URL('/api/integration-test-runs/heatmap', window.location.origin);
+    url.searchParams.set('runsPerProject', '10');
+    if (heatmapBranchFilter.value) url.searchParams.set('branch', heatmapBranchFilter.value);
+    if (heatmapStatusFilter.value) url.searchParams.set('status', heatmapStatusFilter.value);
+
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error(`heatmap request failed (${res.status})`);
+    const data = await res.json();
+    renderHeatmap(data.groups || []);
+  } catch (err) {
+    integrationHeatmap.innerHTML = `<p class="muted">${escapeHtml(err.message)}</p>`;
+  }
+}
+
+function renderHeatmap(groups) {
+  integrationHeatmap.innerHTML = '';
+
+  if (groups.length === 0) {
+    integrationHeatmap.innerHTML = '<p class="muted">No integration runs found.</p>';
+    return;
+  }
+
+  for (const group of groups) {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'integration-heatmap-group';
+
+    const groupLabel = document.createElement('p');
+    groupLabel.className = 'integration-heatmap-group-name';
+    groupLabel.textContent = group.groupName || 'Ungrouped';
+    groupEl.appendChild(groupLabel);
+
+    for (const project of group.projects || []) {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'integration-heatmap-project-row';
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'integration-heatmap-project-name';
+      nameEl.textContent = project.projectName || project.projectKey;
+      nameEl.title = project.projectKey;
+      rowEl.appendChild(nameEl);
+
+      const tilesEl = document.createElement('div');
+      tilesEl.className = 'integration-heatmap-tiles';
+
+      for (const run of project.runs || []) {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = `integration-heatmap-tile ${run.status === 'passed' ? 'passed' : 'failed'}`;
+        if (selectedProjectId === project.projectId && selectedIntegrationRunId === run.id) {
+          tile.classList.add('selected');
+        }
+        tile.title = [
+          project.projectName || project.projectKey,
+          group.groupName ? `Group: ${group.groupName}` : null,
+          `Branch: ${run.branch}`,
+          `Commit: ${shortCommit(run.commitSha)}`,
+          `${formatDateTime(run.runTimestamp)}`,
+          `Status: ${run.status.toUpperCase()}`,
+          `Pass rate: ${pct(run.passRatePercent)}`,
+        ].filter(Boolean).join('\n');
+        tile.setAttribute('aria-label', `${project.projectName || project.projectKey} — ${run.status} — ${pct(run.passRatePercent)}`);
+
+        tile.addEventListener('click', async () => {
+          if (selectedProjectId !== project.projectId) {
+            // Switching project: select it (loads runs for that project)
+            projectSelector.value = project.projectId;
+            await selectProject(project.projectId);
+            renderProjectSelector();
+          } else {
+            // Same project: synchronize run selection
+            selectedIntegrationRunId = run.id;
+            highlightSelectedRunRow();
+            renderIntegrationRunChain(currentIntegrationRunItems);
+            await loadIntegrationRunDetails(project.projectId, run.id);
+          }
+          // Re-render heatmap to update selected tile highlight
+          renderHeatmap(groups);
+        });
+
+        tilesEl.appendChild(tile);
+      }
+
+      rowEl.appendChild(tilesEl);
+      groupEl.appendChild(rowEl);
+    }
+
+    integrationHeatmap.appendChild(groupEl);
+  }
 }

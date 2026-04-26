@@ -24,6 +24,7 @@ type Handler struct {
 	latestComparison            *application.GetLatestComparisonUseCase
 	latestIntegrationComparison *application.GetLatestIntegrationComparisonUseCase
 	getIntegrationRun           *application.GetIntegrationRunUseCase
+	getIntegrationHeatmap       *application.GetIntegrationHeatmapUseCase
 	listBranches                *application.ListBranchesUseCase
 	listContributors            *application.ListContributorsUseCase
 }
@@ -38,6 +39,7 @@ func NewHandler(
 	latestComparison *application.GetLatestComparisonUseCase,
 	latestIntegrationComparison *application.GetLatestIntegrationComparisonUseCase,
 	getIntegrationRun *application.GetIntegrationRunUseCase,
+	getIntegrationHeatmap *application.GetIntegrationHeatmapUseCase,
 	listBranches *application.ListBranchesUseCase,
 	listContributors *application.ListContributorsUseCase,
 ) *Handler {
@@ -51,6 +53,7 @@ func NewHandler(
 		latestComparison:            latestComparison,
 		latestIntegrationComparison: latestIntegrationComparison,
 		getIntegrationRun:           getIntegrationRun,
+		getIntegrationHeatmap:       getIntegrationHeatmap,
 		listBranches:                listBranches,
 		listContributors:            listContributors,
 	}
@@ -367,6 +370,29 @@ func (h *Handler) ListContributors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.Info("operation", "name", "list_contributors", "stage", "success", "request_id", requestID, "project_id", projectID, "items", len(out.Contributors), "default_branch", out.DefaultBranch, "duration_ms", time.Since(start).Milliseconds())
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (h *Handler) GetIntegrationHeatmap(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	requestID := chiMiddleware.GetReqID(r.Context())
+	q := r.URL.Query()
+	runsPerProject, _ := strconv.Atoi(q.Get("runsPerProject"))
+
+	slog.Info("operation", "name", "get_integration_heatmap", "stage", "start", "request_id", requestID)
+
+	out, err := h.getIntegrationHeatmap.Execute(r.Context(), application.IntegrationHeatmapInput{
+		Branch:         q.Get("branch"),
+		Status:         q.Get("status"),
+		RunsPerProject: runsPerProject,
+	})
+	if err != nil {
+		slog.Error("operation", "name", "get_integration_heatmap", "stage", "execute_failed", "request_id", requestID, "error", err)
+		writeAppError(w, err)
+		return
+	}
+
+	slog.Info("operation", "name", "get_integration_heatmap", "stage", "success", "request_id", requestID, "groups", len(out.Groups), "duration_ms", time.Since(start).Milliseconds())
 	writeJSON(w, http.StatusOK, out)
 }
 

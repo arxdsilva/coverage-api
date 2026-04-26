@@ -673,3 +673,115 @@ func (uc *GetIntegrationRunUseCase) Execute(ctx context.Context, projectID strin
 func roundTo2(v float64) float64 {
 	return float64(int(v*100+0.5)) / 100
 }
+
+// GetIntegrationHeatmapUseCase returns recent runs for all projects grouped by project group.
+
+type IntegrationHeatmapInput struct {
+	Branch         string
+	Status         string
+	RunsPerProject int
+}
+
+type HeatmapRunItem struct {
+	ID              string  `json:"id"`
+	Branch          string  `json:"branch"`
+	CommitSHA       string  `json:"commitSha"`
+	RunTimestamp    string  `json:"runTimestamp"`
+	PassRatePercent float64 `json:"passRatePercent"`
+	Status          string  `json:"status"`
+}
+
+type HeatmapProjectItem struct {
+	ProjectID   string           `json:"projectId"`
+	ProjectName string           `json:"projectName"`
+	ProjectKey  string           `json:"projectKey"`
+	Runs        []HeatmapRunItem `json:"runs"`
+}
+
+type HeatmapGroupItem struct {
+	GroupName string               `json:"groupName"`
+	Projects  []HeatmapProjectItem `json:"projects"`
+}
+
+type GetIntegrationHeatmapOutput struct {
+	Groups []HeatmapGroupItem `json:"groups"`
+}
+
+type GetIntegrationHeatmapUseCase struct {
+	runs IntegrationTestRunRepository
+}
+
+func NewGetIntegrationHeatmapUseCase(runs IntegrationTestRunRepository) *GetIntegrationHeatmapUseCase {
+	return &GetIntegrationHeatmapUseCase{runs: runs}
+}
+
+func (uc *GetIntegrationHeatmapUseCase) Execute(ctx context.Context, in IntegrationHeatmapInput) (GetIntegrationHeatmapOutput, error) {
+	runsPerProject := in.RunsPerProject
+	if runsPerProject <= 0 {
+		runsPerProject = 10
+	}
+	if runsPerProject > 30 {
+		runsPerProject = 30
+	}
+
+	status := strings.ToLower(strings.TrimSpace(in.Status))
+	if status != "" && status != string(domain.IntegrationRunStatusPassed) && status != string(domain.IntegrationRunStatusFailed) {
+		return GetIntegrationHeatmapOutput{}, NewInvalidArgument("status must be passed or failed", map[string]any{"field": "status"})
+	}
+
+	rows, err := uc.runs.HeatmapData(ctx, in.Branch, status, runsPerProject)
+	if err != nil {
+		return GetIntegrationHeatmapOutput{}, NewInternal("failed to load heatmap data", err)
+	}
+
+	// Rows arrive ordered: non-empty groups first (alpha), then empty group last,
+	// within each group projects alpha, within each project newest runs first.
+	// We preserve insertion order to match SQL ordering.
+	groupOrder := make([]string, 0)
+	groupSeen := make(map[string]bool)
+	projectOrder := make(map[string][]string) // groupName -> ordered project IDs
+	projectSeen := make(map[string]bool)
+	projectMeta := make(map[string]HeatmapProjectItem)
+
+	for _, row := range rows {
+		if !groupSeen[row.ProjectGroup] {
+			groupSeen[row.ProjectGroup] = true
+			groupOrder = append(groupOrder, row.ProjectGroup)
+		}
+		if !projectSeen[row.ProjectID] {
+			projectSeen[row.ProjectID] = true
+			projectOrder[row.ProjectGroup] = append(projectOrder[row.ProjectGroup], row.ProjectID)
+			projectMeta[row.ProjectID] = HeatmapProjectItem{
+				ProjectID:   row.ProjectID,
+				ProjectName: row.ProjectName,
+				ProjectKey:  row.ProjectKey,
+				Runs:        []HeatmapRunItem{},
+			}
+		}
+		p := projectMeta[row.ProjectID]
+		p.Runs = append(p.Runs, HeatmapRunItem{
+			ID:              row.RunID,
+			Branch:          row.Branch,
+			CommitSHA:       row.CommitSHA,
+			RunTimestamp:    row.RunTimestamp.UTC().Format(time.RFC3339),
+			PassRatePercent: calculatePassRate(row.PassedSpecs, row.TotalSpecs),
+			Status:          row.Status,
+		})
+		projectMeta[row.ProjectID] = p
+	}
+
+	groups := make([]HeatmapGroupItem, 0, len(groupOrder))
+	for _, groupName := range groupOrder {
+		projectIDs := projectOrder[groupName]
+		projects := make([]HeatmapProjectItem, 0, len(projectIDs))
+		for _, pid := range projectIDs {
+			projects = append(projects, projectMeta[pid])
+		}
+		groups = append(groups, HeatmapGroupItem{
+			GroupName: groupName,
+			Projects:  projects,
+		})
+	}
+
+	return GetIntegrationHeatmapOutput{Groups: groups}, nil
+}
