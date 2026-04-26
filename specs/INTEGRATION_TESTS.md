@@ -327,7 +327,7 @@ Behavior:
 
 ### 8.1 Dashboard Additions
 1. Home dashboard shows a compact `Integration Test Health` summary card.
-2. Card includes latest run status (`passed`/`failed`), pass rate, failed count, and duration.
+2. Card includes latest run status (`passed`/`failed`), run success ratio percentage (`passed runs / failed runs * 100`), failed count, and duration.
 3. Card includes delta badge versus baseline (`up`, `down`, `equal`, `new`).
 4. Card includes `Open Integration Screen` action that navigates to the dedicated integration route.
 
@@ -336,22 +336,25 @@ Behavior:
 2. Dedicated integration screen includes `Failed Specs` drawer/modal for selected run.
 3. Dedicated integration screen includes filters: branch, date range, and status.
 4. Dedicated integration screen header includes `Back to Home` control.
-5. Dedicated integration screen includes a horizontal run-chain graphic where each node is a run, ordered newest-to-oldest, colored green for `passed` and red for `failed`.
+5. Dedicated integration screen includes a horizontal run-chain graphic where each node is a run, ordered oldest-to-newest with newest on the right, colored green for `passed` and red for `failed`.
 6. Clicking a run-chain node selects that run and updates the failed-spec details pane.
+7. Run-chain display is capped to at most 5 runs (the newest 5 from the active run-list query).
+8. Integration pass-rate summary card reflects run success ratio percentage (`passedRuns / failedRuns * 100`) over the returned run-list window (up to 20 runs), not only the latest single run.
 
 ### 8.3 Integration Heatmap (All-Project View)
 1. Dedicated integration screen includes an `Integration Heatmap` region that visualizes recent integration runs for **all projects simultaneously**, organized by project group.
-2. Heatmap layout: projects are grouped by their `group` field. Each group is rendered as a labeled section. Within each group, one row per project; one tile per run. Runs are ordered newest-to-oldest within each project row.
+2. Heatmap layout: projects are grouped by their `group` field. Each group is rendered as a labeled section. Within each group, one row per project; one tile per run. Runs are ordered oldest-to-newest within each project row (newest on the right).
 3. Groups are ordered alphabetically. Projects within a group are ordered alphabetically. Projects with no group appear in an unlabeled section at the bottom.
 4. Heatmap data source is `GET /api/integration-test-runs/heatmap` — the dedicated all-project aggregated endpoint (see §7.4).
-5. The heatmap `branch` and `status` filters are independent from the per-project run table filters. The `runsPerProject` count is controlled by the frontend and optimized for visualization density (default 10).
-6. Tile color semantics:
-  - green scale for `passed`
-  - red scale for `failed`
-7. Tile intensity should reflect quality signal (for example pass rate), while preserving pass/fail color family.
-8. Hover/focus state must show at minimum: project name, group, run id, branch, commit sha, timestamp, status, pass rate.
-9. Clicking a heatmap tile for the currently selected project must synchronize selected run state with the run chain, run table, and failed-spec details. Clicking a tile for a different project may switch the active project selection.
-10. Heatmap must respond to its own branch/status filters and reload independently from the per-project run table.
+5. Heatmap is rendered using each project's default branch only.
+6. The heatmap status filter is independent from per-project run-table filters. The `runsPerProject` count is controlled by the frontend and optimized for visualization density (default 10).
+7. Tile status semantics use emoji markers:
+  - `✅` for `passed`
+  - `❌` for `failed`
+8. Heatmap project-row background tint reflects the newest run result for that project.
+9. Hover/focus state must show at minimum: project name, group, run id, branch, commit sha, timestamp, status, pass rate.
+10. Clicking a heatmap tile for the currently selected project must synchronize selected run state with the run chain, run table, and failed-spec details. Clicking a tile for a different project may switch the active project selection.
+11. Heatmap supports local reload and its own status filter, independent from the per-project run table.
 
 ### 8.3.1 Integration Refresh Semantics
 1. The integration route must expose a primary screen-level `Refresh` action.
@@ -360,7 +363,7 @@ Behavior:
 4. If the selected run still exists after refresh, it should remain selected; otherwise the newest run in the refreshed list becomes selected.
 5. The per-project `Reload` control must refresh only the active project's comparison, run list, run chain, and failed-spec details.
 6. The integration heatmap overlay `Reload` control must refresh only the all-project heatmap query.
-7. Heatmap overlay filters (`branch`, `status`) must be preserved across both the overlay-local reload and the screen-level refresh.
+7. Heatmap overlay status filter must be preserved across both the overlay-local reload and the screen-level refresh.
 8. If the heatmap overlay is open during a screen-level refresh, it should remain open and repaint when the refreshed heatmap data arrives.
 9. Refresh operations must not reset route-level query parameter behavior such as `?heatmap=open`.
 10. Error handling must remain local to the failing region whenever possible; for example, a heatmap reload failure must not clear the per-project run table.

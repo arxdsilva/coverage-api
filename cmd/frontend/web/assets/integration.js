@@ -614,14 +614,14 @@ async function loadIntegrationRuns(projectId, preferredRunId = null) {
     const items = data.items || [];
 
     currentIntegrationRunItems = items;
-    const passRateValues = items
-      .map((run) => Number(run.passRatePercent))
-      .filter((value) => Number.isFinite(value));
-    if (passRateValues.length > 0) {
-      const averagePassRate = passRateValues.reduce((sum, value) => sum + value, 0) / passRateValues.length;
-      integrationPassRate.textContent = pct(averagePassRate);
-    } else {
+    const passedRuns = items.filter((run) => run.status === 'passed').length;
+    const failedRuns = items.filter((run) => run.status === 'failed').length;
+    if (passedRuns === 0 && failedRuns === 0) {
       integrationPassRate.textContent = '-';
+    } else if (failedRuns === 0) {
+      integrationPassRate.textContent = '∞%';
+    } else {
+      integrationPassRate.textContent = `${((passedRuns / failedRuns) * 100).toFixed(2)}%`;
     }
 
     if (items.length === 0) {
