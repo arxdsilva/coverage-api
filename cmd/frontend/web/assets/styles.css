@@ -1370,6 +1370,29 @@ td.code {
   background: linear-gradient(160deg, #1a9261 0%, #0f5f3f 100%);
 }
 
+@media (min-width: 1400px) {
+  .heat-tile.delta-pos-3 {
+    font-size: clamp(13px, 0.26vw + 10px, 17px);
+  }
+
+  .heat-tile.delta-pos-3 .heat-name {
+    font-size: clamp(13px, 0.22vw + 10px, 16px);
+  }
+
+  .heat-tile.delta-pos-3 .heat-value {
+    font-size: clamp(22px, 0.5vw + 16px, 32px);
+  }
+
+  .heat-tile.delta-pos-3 .heat-threshold,
+  .heat-tile.delta-pos-3 .heat-delta {
+    font-size: clamp(12px, 0.16vw + 10px, 15px);
+  }
+
+  .scale-step.delta-pos-3 {
+    font-size: clamp(12px, 0.2vw + 10px, 15px);
+  }
+}
+
 .heat-name {
   font-size: 12px;
   font-weight: 600;
