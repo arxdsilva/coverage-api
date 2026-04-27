@@ -490,13 +490,14 @@ func compareFailedSpecs(previous []FailedSpecResponse, current []FailedSpecRespo
 }
 
 type ListIntegrationRunsInput struct {
-	ProjectID string
-	Branch    string
-	Status    string
-	From      *time.Time
-	To        *time.Time
-	Page      int
-	PageSize  int
+	ProjectID   string
+	Branch      string
+	Status      string
+	Environment string
+	From        *time.Time
+	To          *time.Time
+	Page        int
+	PageSize    int
 }
 
 type IntegrationRunListItem struct {
@@ -504,6 +505,7 @@ type IntegrationRunListItem struct {
 	Branch          string  `json:"branch"`
 	CommitSHA       string  `json:"commitSha"`
 	RunTimestamp    string  `json:"runTimestamp"`
+	Environment     *string `json:"environment,omitempty"`
 	TotalSpecs      int     `json:"totalSpecs"`
 	FailedSpecs     int     `json:"failedSpecs"`
 	PassRatePercent float64 `json:"passRatePercent"`
@@ -539,8 +541,12 @@ func (uc *ListIntegrationRunsUseCase) Execute(ctx context.Context, in ListIntegr
 	if status != "" && status != string(domain.IntegrationRunStatusPassed) && status != string(domain.IntegrationRunStatusFailed) {
 		return ListIntegrationRunsOutput{}, NewInvalidArgument("status must be passed or failed", map[string]any{"field": "status"})
 	}
+	environment := strings.ToLower(strings.TrimSpace(in.Environment))
+	if environment != "" && environment != "test" && environment != "stage" && environment != "prod" && environment != "none" {
+		return ListIntegrationRunsOutput{}, NewInvalidArgument("environment must be one of: test, stage, prod, none", map[string]any{"field": "environment"})
+	}
 
-	runs, total, err := uc.runs.ListByProject(ctx, in.ProjectID, in.Branch, status, in.From, in.To, page, pageSize)
+	runs, total, err := uc.runs.ListByProject(ctx, in.ProjectID, in.Branch, status, environment, in.From, in.To, page, pageSize)
 	if err != nil {
 		return ListIntegrationRunsOutput{}, NewInternal("failed to list integration runs", err)
 	}
@@ -552,6 +558,7 @@ func (uc *ListIntegrationRunsUseCase) Execute(ctx context.Context, in ListIntegr
 			Branch:          run.Branch,
 			CommitSHA:       run.CommitSHA,
 			RunTimestamp:    run.RunTimestamp.UTC().Format(time.RFC3339),
+			Environment:     run.Environment,
 			TotalSpecs:      run.TotalSpecs,
 			FailedSpecs:     run.FailedSpecs,
 			PassRatePercent: calculatePassRate(run.PassedSpecs, run.TotalSpecs),

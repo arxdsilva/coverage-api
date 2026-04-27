@@ -48,7 +48,7 @@ type IntegrationTestRunRepository interface {
 	GetLatestByProjectAndBranch(ctx context.Context, projectID string, branch string) (domain.IntegrationTestRun, error)
 	GetLatestByProject(ctx context.Context, projectID string) (domain.IntegrationTestRun, error)
 	GetByID(ctx context.Context, projectID string, runID string) (domain.IntegrationTestRun, error)
-	ListByProject(ctx context.Context, projectID string, branch string, status string, from *time.Time, to *time.Time, page int, pageSize int) ([]domain.IntegrationTestRun, int, error)
+	ListByProject(ctx context.Context, projectID string, branch string, status string, environment string, from *time.Time, to *time.Time, page int, pageSize int) ([]domain.IntegrationTestRun, int, error)
 	HeatmapData(ctx context.Context, branch string, status string, runsPerProject int) ([]IntegrationHeatmapRow, error)
 }
 

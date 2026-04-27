@@ -265,13 +265,14 @@ func (h *Handler) ListIntegrationRuns(w http.ResponseWriter, r *http.Request) {
 	}
 
 	out, err := h.listIntegrationRuns.Execute(r.Context(), application.ListIntegrationRunsInput{
-		ProjectID: projectID,
-		Branch:    q.Get("branch"),
-		Status:    q.Get("status"),
-		From:      from,
-		To:        to,
-		Page:      page,
-		PageSize:  pageSize,
+		ProjectID:   projectID,
+		Branch:      q.Get("branch"),
+		Status:      q.Get("status"),
+		Environment: q.Get("environment"),
+		From:        from,
+		To:          to,
+		Page:        page,
+		PageSize:    pageSize,
 	})
 	if err != nil {
 		slog.Error("operation", "name", "list_integration_runs", "stage", "execute_failed", "request_id", requestID, "project_id", projectID, "error", err)

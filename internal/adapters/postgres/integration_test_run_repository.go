@@ -200,7 +200,7 @@ func (r *IntegrationTestRunRepository) GetByID(ctx context.Context, projectID st
 	return run, nil
 }
 
-func (r *IntegrationTestRunRepository) ListByProject(ctx context.Context, projectID string, branch string, status string, from *time.Time, to *time.Time, page int, pageSize int) ([]domain.IntegrationTestRun, int, error) {
+func (r *IntegrationTestRunRepository) ListByProject(ctx context.Context, projectID string, branch string, status string, environment string, from *time.Time, to *time.Time, page int, pageSize int) ([]domain.IntegrationTestRun, int, error) {
 	q := getQuerier(ctx, r.pool)
 	offset := (page - 1) * pageSize
 
@@ -217,6 +217,15 @@ func (r *IntegrationTestRunRepository) ListByProject(ctx context.Context, projec
 		where += fmt.Sprintf(" AND status = $%d", idx)
 		args = append(args, status)
 		idx++
+	}
+	if environment != "" {
+		if environment == "none" {
+			where += " AND environment IS NULL"
+		} else {
+			where += fmt.Sprintf(" AND environment = $%d", idx)
+			args = append(args, environment)
+			idx++
+		}
 	}
 	if from != nil {
 		where += fmt.Sprintf(" AND run_timestamp >= $%d", idx)

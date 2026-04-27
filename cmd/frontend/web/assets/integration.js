@@ -11,6 +11,7 @@ const integrationDelta = document.getElementById('integrationDelta');
 const integrationDuration = document.getElementById('integrationDuration');
 const integrationBranchFilter = document.getElementById('integrationBranchFilter');
 const integrationStatusFilter = document.getElementById('integrationStatusFilter');
+const integrationEnvironmentFilter = document.getElementById('integrationEnvironmentFilter');
 const integrationReload = document.getElementById('integrationReload');
 const integrationAutoRefreshInterval = document.getElementById('integrationAutoRefreshInterval');
 const integrationAutoRefreshStatus = document.getElementById('integrationAutoRefreshStatus');
@@ -73,6 +74,9 @@ integrationBranchFilter.addEventListener('change', async () => {
   await loadIntegrationScreen(selectedProjectId, { preferredRunId: null });
 });
 integrationStatusFilter.addEventListener('change', async () => {
+  await loadIntegrationRuns(selectedProjectId);
+});
+integrationEnvironmentFilter.addEventListener('change', async () => {
   await loadIntegrationRuns(selectedProjectId);
 });
 integrationReload.addEventListener('click', async () => {
@@ -607,9 +611,13 @@ async function loadIntegrationRuns(projectId, preferredRunId = null) {
     const project = projects.find((p) => p.id === projectId);
     const selectedBranch = integrationBranchFilter.value || project?.defaultBranch || 'main';
     const selectedStatus = integrationStatusFilter.value || '';
+    const selectedEnvironment = integrationEnvironmentFilter.value || '';
     url.searchParams.set('branch', selectedBranch);
     if (selectedStatus) {
       url.searchParams.set('status', selectedStatus);
+    }
+    if (selectedEnvironment) {
+      url.searchParams.set('environment', selectedEnvironment);
     }
 
     const res = await fetch(url.toString());
@@ -622,7 +630,8 @@ async function loadIntegrationRuns(projectId, preferredRunId = null) {
     const currentProject = projects.find((p) => p.id === projectId);
     const currentBranch = integrationBranchFilter.value || currentProject?.defaultBranch || 'main';
     const currentStatus = integrationStatusFilter.value || '';
-    if (currentBranch !== selectedBranch || currentStatus !== selectedStatus) return;
+    const currentEnvironment = integrationEnvironmentFilter.value || '';
+    if (currentBranch !== selectedBranch || currentStatus !== selectedStatus || currentEnvironment !== selectedEnvironment) return;
 
     currentIntegrationRunItems = items;
     const passedRuns = items.filter((run) => run.status === 'passed').length;
