@@ -24,6 +24,7 @@ Runs are persisted even when specs fail.
 - `commitSha`: commit SHA
 - `triggerType`: `push`, `pr`, or `manual`
 - `runTimestamp`: current UTC timestamp
+- `environment` (optional): runtime environment (`test`, `stage`, or `production`)
 - `ginkgoReport`: normalized Ginkgo JSON payload (see below)
 
 Authentication header:

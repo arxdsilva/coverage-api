@@ -1,4 +1,6 @@
 -- +goose Up
+CREATE TYPE environment_type AS ENUM ('test', 'stage', 'production');
+
 CREATE TABLE IF NOT EXISTS integration_test_runs (
   id UUID PRIMARY KEY,
   project_id UUID NOT NULL REFERENCES projects(id),
@@ -20,6 +22,7 @@ CREATE TABLE IF NOT EXISTS integration_test_runs (
   timed_out BOOLEAN NOT NULL DEFAULT FALSE,
   duration_ms BIGINT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('passed', 'failed')),
+  environment environment_type,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -50,3 +53,4 @@ CREATE INDEX IF NOT EXISTS integration_spec_results_state_idx ON integration_spe
 -- +goose Down
 DROP TABLE IF EXISTS integration_spec_results;
 DROP TABLE IF EXISTS integration_test_runs;
+DROP TYPE IF EXISTS environment_type;
