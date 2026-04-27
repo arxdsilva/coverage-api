@@ -1,5 +1,5 @@
 -- DEV SEED DATA
--- Remove this file and the compose seed service before production deployment.
+-- Remove this file and the compose seed service before prod deployment.
 
 INSERT INTO projects (id, project_key, name, group_name, default_branch, global_threshold_percent)
 VALUES
@@ -114,11 +114,11 @@ VALUES
   ('c1000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'main', 'ca11it01', 'dev-seed', 'push', NOW() - INTERVAL '2 day', '2.21.0', 'coverage-api integration suite', './integration', 12, 11, 1, 0, 0, 0, FALSE, FALSE, 18203, 'failed', 'test'),
   ('c1000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'feature/rbac', 'ca11it02', 'dev-seed', 'pr', NOW() - INTERVAL '20 hour', '2.21.0', 'coverage-api integration suite', './integration', 10, 10, 0, 0, 0, 0, FALSE, FALSE, 14110, 'passed', 'stage'),
 
-  ('c2000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'main', 'payit001', 'dev-seed', 'push', NOW() - INTERVAL '2 day', '2.21.0', 'payments integration suite', './integration', 25, 24, 0, 1, 0, 0, FALSE, FALSE, 26350, 'passed', 'production'),
+  ('c2000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'main', 'payit001', 'dev-seed', 'push', NOW() - INTERVAL '2 day', '2.21.0', 'payments integration suite', './integration', 25, 24, 0, 1, 0, 0, FALSE, FALSE, 26350, 'passed', 'prod'),
   ('c2000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'feature/fraud-check', 'payit002', 'dev-seed', 'pr', NOW() - INTERVAL '16 hour', '2.21.0', 'payments integration suite', './integration', 18, 16, 1, 0, 1, 0, FALSE, FALSE, 21900, 'failed', 'test'),
 
   ('c3000000-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333', 'main', 'webit001', 'dev-seed', 'push', NOW() - INTERVAL '30 hour', '2.21.0', 'webapp integration suite', './integration', 20, 18, 1, 0, 0, 1, FALSE, FALSE, 24520, 'failed', 'stage'),
-  ('c7000000-0000-0000-0000-000000000001', '77777777-7777-7777-7777-777777777777', 'main', 'ordit001', 'dev-seed', 'push', NOW() - INTERVAL '12 hour', '2.21.0', 'orders integration suite', './integration', 14, 14, 0, 0, 0, 0, FALSE, FALSE, 17640, 'passed', 'production')
+  ('c7000000-0000-0000-0000-000000000001', '77777777-7777-7777-7777-777777777777', 'main', 'ordit001', 'dev-seed', 'push', NOW() - INTERVAL '12 hour', '2.21.0', 'orders integration suite', './integration', 14, 14, 0, 0, 0, 0, FALSE, FALSE, 17640, 'passed', 'prod')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO integration_spec_results (
@@ -154,16 +154,16 @@ VALUES
   ('c4000000-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'main', 'autit001', 'dev-seed', 'push', NOW() - INTERVAL '15 hour', '2.21.0', 'auth-service integration suite', './integration', 22, 21, 1, 0, 0, 0, FALSE, FALSE, 22840, 'failed', 'test'),
   ('c4000000-0000-0000-0000-000000000002', '44444444-4444-4444-4444-444444444444', 'feature/oidc-claims', 'autit002', 'dev-seed', 'pr', NOW() - INTERVAL '9 hour', '2.21.0', 'auth-service integration suite', './integration', 19, 18, 0, 1, 0, 0, FALSE, FALSE, 20120, 'passed', 'stage'),
 
-  ('c5000000-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 'main', 'notit001', 'dev-seed', 'push', NOW() - INTERVAL '14 hour', '2.21.0', 'notifications integration suite', './integration', 16, 14, 1, 0, 1, 0, FALSE, FALSE, 19010, 'failed', 'production'),
+  ('c5000000-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 'main', 'notit001', 'dev-seed', 'push', NOW() - INTERVAL '14 hour', '2.21.0', 'notifications integration suite', './integration', 16, 14, 1, 0, 1, 0, FALSE, FALSE, 19010, 'failed', 'prod'),
   ('c5000000-0000-0000-0000-000000000002', '55555555-5555-5555-5555-555555555555', 'feature/batch-retry', 'notit002', 'dev-seed', 'pr', NOW() - INTERVAL '7 hour', '2.21.0', 'notifications integration suite', './integration', 13, 13, 0, 0, 0, 0, FALSE, FALSE, 15300, 'passed', 'test'),
 
   ('c6000000-0000-0000-0000-000000000001', '66666666-6666-6666-6666-666666666666', 'main', 'catit001', 'dev-seed', 'push', NOW() - INTERVAL '13 hour', '2.21.0', 'catalog integration suite', './integration', 24, 22, 1, 0, 0, 1, FALSE, FALSE, 27140, 'failed', 'stage'),
-  ('c6000000-0000-0000-0000-000000000002', '66666666-6666-6666-6666-666666666666', 'feature/stock-sync', 'catit002', 'dev-seed', 'pr', NOW() - INTERVAL '6 hour', '2.21.0', 'catalog integration suite', './integration', 20, 20, 0, 0, 0, 0, FALSE, FALSE, 23600, 'passed', 'production'),
+  ('c6000000-0000-0000-0000-000000000002', '66666666-6666-6666-6666-666666666666', 'feature/stock-sync', 'catit002', 'dev-seed', 'pr', NOW() - INTERVAL '6 hour', '2.21.0', 'catalog integration suite', './integration', 20, 20, 0, 0, 0, 0, FALSE, FALSE, 23600, 'passed', 'prod'),
 
   ('c8000000-0000-0000-0000-000000000001', '88888888-8888-8888-8888-888888888888', 'main', 'shpit001', 'dev-seed', 'push', NOW() - INTERVAL '11 hour', '2.21.0', 'shipping integration suite', './integration', 15, 14, 1, 0, 0, 0, FALSE, FALSE, 18220, 'failed', 'test'),
   ('c8000000-0000-0000-0000-000000000002', '88888888-8888-8888-8888-888888888888', 'feature/label-cache', 'shpit002', 'dev-seed', 'pr', NOW() - INTERVAL '5 hour', '2.21.0', 'shipping integration suite', './integration', 12, 12, 0, 0, 0, 0, FALSE, FALSE, 14990, 'passed', 'stage'),
 
-  ('c9000000-0000-0000-0000-000000000001', '99999999-9999-9999-9999-999999999999', 'main', 'anait001', 'dev-seed', 'push', NOW() - INTERVAL '10 hour', '2.21.0', 'analytics integration suite', './integration', 17, 15, 1, 0, 0, 1, FALSE, FALSE, 21110, 'failed', 'production'),
+  ('c9000000-0000-0000-0000-000000000001', '99999999-9999-9999-9999-999999999999', 'main', 'anait001', 'dev-seed', 'push', NOW() - INTERVAL '10 hour', '2.21.0', 'analytics integration suite', './integration', 17, 15, 1, 0, 0, 1, FALSE, FALSE, 21110, 'failed', 'prod'),
   ('ca000000-0000-0000-0000-000000000001', 'aaaaaaaa-1111-1111-1111-111111111111', 'main', 'seait001', 'dev-seed', 'push', NOW() - INTERVAL '4 hour', '2.21.0', 'search integration suite', './integration', 21, 21, 0, 0, 0, 0, FALSE, FALSE, 24480, 'passed', 'test')
 ON CONFLICT (id) DO NOTHING;
 
@@ -176,52 +176,52 @@ INSERT INTO integration_test_runs (
 )
 VALUES
   ('e1110000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'main', 'ca11m005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'coverage-api integration suite', './integration', 12, 12, 0, 0, 0, 0, FALSE, FALSE, 17100, 'passed', 'stage'),
-  ('e1110000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'main', 'ca11m006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'coverage-api integration suite', './integration', 12, 11, 1, 0, 0, 0, FALSE, FALSE, 18340, 'failed', 'production'),
+  ('e1110000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'main', 'ca11m006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'coverage-api integration suite', './integration', 12, 11, 1, 0, 0, 0, FALSE, FALSE, 18340, 'failed', 'prod'),
   ('e1110000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'main', 'ca11m007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'coverage-api integration suite', './integration', 12, 12, 0, 0, 0, 0, FALSE, FALSE, 16980, 'passed', 'test'),
   ('e1110000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'main', 'ca11m008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'coverage-api integration suite', './integration', 12, 11, 1, 0, 0, 0, FALSE, FALSE, 18620, 'failed', 'stage'),
 
-  ('e2220000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'main', 'paym0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'payments integration suite', './integration', 25, 25, 0, 0, 0, 0, FALSE, FALSE, 24910, 'passed', 'production'),
+  ('e2220000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'main', 'paym0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'payments integration suite', './integration', 25, 25, 0, 0, 0, 0, FALSE, FALSE, 24910, 'passed', 'prod'),
   ('e2220000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'main', 'paym0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'payments integration suite', './integration', 25, 24, 1, 0, 0, 0, FALSE, FALSE, 26380, 'failed', 'test'),
   ('e2220000-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'main', 'paym0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'payments integration suite', './integration', 25, 25, 0, 0, 0, 0, FALSE, FALSE, 24670, 'passed', 'stage'),
-  ('e2220000-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', 'main', 'paym0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'payments integration suite', './integration', 25, 24, 1, 0, 0, 0, FALSE, FALSE, 25830, 'failed', 'production'),
+  ('e2220000-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', 'main', 'paym0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'payments integration suite', './integration', 25, 24, 1, 0, 0, 0, FALSE, FALSE, 25830, 'failed', 'prod'),
 
   ('e3330000-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333', 'main', 'webm0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'webapp integration suite', './integration', 20, 19, 1, 0, 0, 0, FALSE, FALSE, 23310, 'failed', 'test'),
   ('e3330000-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333333', 'main', 'webm0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'webapp integration suite', './integration', 20, 20, 0, 0, 0, 0, FALSE, FALSE, 21940, 'passed', 'stage'),
-  ('e3330000-0000-0000-0000-000000000003', '33333333-3333-3333-3333-333333333333', 'main', 'webm0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'webapp integration suite', './integration', 20, 19, 1, 0, 0, 0, FALSE, FALSE, 24120, 'failed', 'production'),
+  ('e3330000-0000-0000-0000-000000000003', '33333333-3333-3333-3333-333333333333', 'main', 'webm0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'webapp integration suite', './integration', 20, 19, 1, 0, 0, 0, FALSE, FALSE, 24120, 'failed', 'prod'),
   ('e3330000-0000-0000-0000-000000000004', '33333333-3333-3333-3333-333333333333', 'main', 'webm0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'webapp integration suite', './integration', 20, 20, 0, 0, 0, 0, FALSE, FALSE, 21490, 'passed', 'test'),
 
   ('e4440000-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'main', 'autm0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'auth-service integration suite', './integration', 22, 22, 0, 0, 0, 0, FALSE, FALSE, 22060, 'passed', 'stage'),
-  ('e4440000-0000-0000-0000-000000000002', '44444444-4444-4444-4444-444444444444', 'main', 'autm0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'auth-service integration suite', './integration', 22, 21, 1, 0, 0, 0, FALSE, FALSE, 23570, 'failed', 'production'),
+  ('e4440000-0000-0000-0000-000000000002', '44444444-4444-4444-4444-444444444444', 'main', 'autm0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'auth-service integration suite', './integration', 22, 21, 1, 0, 0, 0, FALSE, FALSE, 23570, 'failed', 'prod'),
   ('e4440000-0000-0000-0000-000000000003', '44444444-4444-4444-4444-444444444444', 'main', 'autm0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'auth-service integration suite', './integration', 22, 22, 0, 0, 0, 0, FALSE, FALSE, 21820, 'passed', 'test'),
   ('e4440000-0000-0000-0000-000000000004', '44444444-4444-4444-4444-444444444444', 'main', 'autm0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'auth-service integration suite', './integration', 22, 21, 1, 0, 0, 0, FALSE, FALSE, 23210, 'failed', 'stage'),
 
-  ('e5550000-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 'main', 'notm0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'notifications integration suite', './integration', 16, 15, 1, 0, 0, 0, FALSE, FALSE, 18270, 'failed', 'production'),
+  ('e5550000-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 'main', 'notm0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'notifications integration suite', './integration', 16, 15, 1, 0, 0, 0, FALSE, FALSE, 18270, 'failed', 'prod'),
   ('e5550000-0000-0000-0000-000000000002', '55555555-5555-5555-5555-555555555555', 'main', 'notm0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'notifications integration suite', './integration', 16, 16, 0, 0, 0, 0, FALSE, FALSE, 16990, 'passed', 'test'),
   ('e5550000-0000-0000-0000-000000000003', '55555555-5555-5555-5555-555555555555', 'main', 'notm0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'notifications integration suite', './integration', 16, 15, 1, 0, 0, 0, FALSE, FALSE, 18810, 'failed', 'stage'),
-  ('e5550000-0000-0000-0000-000000000004', '55555555-5555-5555-5555-555555555555', 'main', 'notm0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'notifications integration suite', './integration', 16, 16, 0, 0, 0, 0, FALSE, FALSE, 16450, 'passed', 'production'),
+  ('e5550000-0000-0000-0000-000000000004', '55555555-5555-5555-5555-555555555555', 'main', 'notm0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'notifications integration suite', './integration', 16, 16, 0, 0, 0, 0, FALSE, FALSE, 16450, 'passed', 'prod'),
 
   ('e6660000-0000-0000-0000-000000000001', '66666666-6666-6666-6666-666666666666', 'main', 'catm0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'catalog integration suite', './integration', 24, 23, 1, 0, 0, 0, FALSE, FALSE, 25820, 'failed', 'test'),
   ('e6660000-0000-0000-0000-000000000002', '66666666-6666-6666-6666-666666666666', 'main', 'catm0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'catalog integration suite', './integration', 24, 24, 0, 0, 0, 0, FALSE, FALSE, 24410, 'passed', 'stage'),
-  ('e6660000-0000-0000-0000-000000000003', '66666666-6666-6666-6666-666666666666', 'main', 'catm0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'catalog integration suite', './integration', 24, 23, 1, 0, 0, 0, FALSE, FALSE, 26690, 'failed', 'production'),
+  ('e6660000-0000-0000-0000-000000000003', '66666666-6666-6666-6666-666666666666', 'main', 'catm0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'catalog integration suite', './integration', 24, 23, 1, 0, 0, 0, FALSE, FALSE, 26690, 'failed', 'prod'),
   ('e6660000-0000-0000-0000-000000000004', '66666666-6666-6666-6666-666666666666', 'main', 'catm0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'catalog integration suite', './integration', 24, 24, 0, 0, 0, 0, FALSE, FALSE, 23950, 'passed', 'test'),
 
   ('e7770000-0000-0000-0000-000000000001', '77777777-7777-7777-7777-777777777777', 'main', 'ordm0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'orders integration suite', './integration', 14, 14, 0, 0, 0, 0, FALSE, FALSE, 16830, 'passed', 'stage'),
-  ('e7770000-0000-0000-0000-000000000002', '77777777-7777-7777-7777-777777777777', 'main', 'ordm0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'orders integration suite', './integration', 14, 13, 1, 0, 0, 0, FALSE, FALSE, 18200, 'failed', 'production'),
+  ('e7770000-0000-0000-0000-000000000002', '77777777-7777-7777-7777-777777777777', 'main', 'ordm0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'orders integration suite', './integration', 14, 13, 1, 0, 0, 0, FALSE, FALSE, 18200, 'failed', 'prod'),
   ('e7770000-0000-0000-0000-000000000003', '77777777-7777-7777-7777-777777777777', 'main', 'ordm0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'orders integration suite', './integration', 14, 14, 0, 0, 0, 0, FALSE, FALSE, 16690, 'passed', 'test'),
   ('e7770000-0000-0000-0000-000000000004', '77777777-7777-7777-7777-777777777777', 'main', 'ordm0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'orders integration suite', './integration', 14, 13, 1, 0, 0, 0, FALSE, FALSE, 17940, 'failed', 'stage'),
 
-  ('e8880000-0000-0000-0000-000000000001', '88888888-8888-8888-8888-888888888888', 'main', 'shpm0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'shipping integration suite', './integration', 15, 14, 1, 0, 0, 0, FALSE, FALSE, 18640, 'failed', 'production'),
+  ('e8880000-0000-0000-0000-000000000001', '88888888-8888-8888-8888-888888888888', 'main', 'shpm0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'shipping integration suite', './integration', 15, 14, 1, 0, 0, 0, FALSE, FALSE, 18640, 'failed', 'prod'),
   ('e8880000-0000-0000-0000-000000000002', '88888888-8888-8888-8888-888888888888', 'main', 'shpm0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'shipping integration suite', './integration', 15, 15, 0, 0, 0, 0, FALSE, FALSE, 17130, 'passed', 'test'),
   ('e8880000-0000-0000-0000-000000000003', '88888888-8888-8888-8888-888888888888', 'main', 'shpm0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'shipping integration suite', './integration', 15, 14, 1, 0, 0, 0, FALSE, FALSE, 19020, 'failed', 'stage'),
-  ('e8880000-0000-0000-0000-000000000004', '88888888-8888-8888-8888-888888888888', 'main', 'shpm0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'shipping integration suite', './integration', 15, 15, 0, 0, 0, 0, FALSE, FALSE, 16790, 'passed', 'production'),
+  ('e8880000-0000-0000-0000-000000000004', '88888888-8888-8888-8888-888888888888', 'main', 'shpm0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'shipping integration suite', './integration', 15, 15, 0, 0, 0, 0, FALSE, FALSE, 16790, 'passed', 'prod'),
 
   ('e9990000-0000-0000-0000-000000000001', '99999999-9999-9999-9999-999999999999', 'main', 'anam0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'analytics integration suite', './integration', 17, 16, 1, 0, 0, 0, FALSE, FALSE, 20540, 'failed', 'test'),
   ('e9990000-0000-0000-0000-000000000002', '99999999-9999-9999-9999-999999999999', 'main', 'anam0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'analytics integration suite', './integration', 17, 17, 0, 0, 0, 0, FALSE, FALSE, 19120, 'passed', 'stage'),
-  ('e9990000-0000-0000-0000-000000000003', '99999999-9999-9999-9999-999999999999', 'main', 'anam0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'analytics integration suite', './integration', 17, 16, 1, 0, 0, 0, FALSE, FALSE, 21410, 'failed', 'production'),
+  ('e9990000-0000-0000-0000-000000000003', '99999999-9999-9999-9999-999999999999', 'main', 'anam0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'analytics integration suite', './integration', 17, 16, 1, 0, 0, 0, FALSE, FALSE, 21410, 'failed', 'prod'),
   ('e9990000-0000-0000-0000-000000000004', '99999999-9999-9999-9999-999999999999', 'main', 'anam0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'analytics integration suite', './integration', 17, 17, 0, 0, 0, 0, FALSE, FALSE, 18780, 'passed', 'test'),
 
   ('eaaa0000-0000-0000-0000-000000000001', 'aaaaaaaa-1111-1111-1111-111111111111', 'main', 'seam0005', 'dev-seed', 'push', NOW() - INTERVAL '6 day', '2.21.0', 'search integration suite', './integration', 21, 21, 0, 0, 0, 0, FALSE, FALSE, 23150, 'passed', 'stage'),
-  ('eaaa0000-0000-0000-0000-000000000002', 'aaaaaaaa-1111-1111-1111-111111111111', 'main', 'seam0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'search integration suite', './integration', 21, 20, 1, 0, 0, 0, FALSE, FALSE, 24670, 'failed', 'production'),
+  ('eaaa0000-0000-0000-0000-000000000002', 'aaaaaaaa-1111-1111-1111-111111111111', 'main', 'seam0006', 'dev-seed', 'push', NOW() - INTERVAL '5 day', '2.21.0', 'search integration suite', './integration', 21, 20, 1, 0, 0, 0, FALSE, FALSE, 24670, 'failed', 'prod'),
   ('eaaa0000-0000-0000-0000-000000000003', 'aaaaaaaa-1111-1111-1111-111111111111', 'main', 'seam0007', 'dev-seed', 'push', NOW() - INTERVAL '4 day', '2.21.0', 'search integration suite', './integration', 21, 21, 0, 0, 0, 0, FALSE, FALSE, 22890, 'passed', 'test'),
   ('eaaa0000-0000-0000-0000-000000000004', 'aaaaaaaa-1111-1111-1111-111111111111', 'main', 'seam0008', 'dev-seed', 'push', NOW() - INTERVAL '3 day', '2.21.0', 'search integration suite', './integration', 21, 20, 1, 0, 0, 0, FALSE, FALSE, 24220, 'failed', 'stage')
 ON CONFLICT (id) DO NOTHING;

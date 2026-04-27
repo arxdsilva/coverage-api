@@ -323,6 +323,7 @@ func (r *IntegrationTestRunRepository) HeatmapData(ctx context.Context, branch s
 				itr.passed_specs,
 				itr.total_specs,
 				itr.status,
+				itr.environment,
 				COALESCE(p.name, '')        AS project_name,
 				p.project_key,
 				COALESCE(p.group_name, '')  AS project_group,
@@ -335,7 +336,7 @@ func (r *IntegrationTestRunRepository) HeatmapData(ctx context.Context, branch s
 			%s
 		)
 		SELECT run_id, project_id, project_name, project_key, project_group,
-		       branch, commit_sha, run_timestamp, passed_specs, total_specs, status
+		       branch, commit_sha, run_timestamp, passed_specs, total_specs, status, environment
 		FROM ranked
 		WHERE rn <= $%d
 		ORDER BY
@@ -366,6 +367,7 @@ func (r *IntegrationTestRunRepository) HeatmapData(ctx context.Context, branch s
 			&row.PassedSpecs,
 			&row.TotalSpecs,
 			&row.Status,
+			&row.Environment,
 		); err != nil {
 			return nil, fmt.Errorf("scan heatmap row: %w", err)
 		}

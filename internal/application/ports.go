@@ -40,6 +40,7 @@ type IntegrationHeatmapRow struct {
 	PassedSpecs  int
 	TotalSpecs   int
 	Status       string
+	Environment  *string
 }
 
 type IntegrationTestRunRepository interface {

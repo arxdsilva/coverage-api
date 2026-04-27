@@ -849,6 +849,9 @@ function renderHeatmap(groups) {
     return;
   }
 
+  // Define environment order for consistent display
+  const environmentOrder = ['test', 'stage', 'prod'];
+
   for (const group of groups) {
     const groupEl = document.createElement('div');
     groupEl.className = 'integration-heatmap-group';
@@ -861,76 +864,143 @@ function renderHeatmap(groups) {
     for (const project of group.projects || []) {
       const defaultBranch = getProjectDefaultBranch(project.projectId);
       const runs = (project.runs || []).filter((run) => run.branch === defaultBranch);
-
-      const rowEl = document.createElement('div');
-      rowEl.className = 'integration-heatmap-project-row';
-      const newestRun = runs.length > 0 ? runs[0] : null;
-      if (newestRun?.status === 'passed') {
-        rowEl.classList.add('newest-passed');
-      } else if (newestRun?.status === 'failed') {
-        rowEl.classList.add('newest-failed');
+      if (runs.length === 0) {
+        continue;
       }
 
-      const nameEl = document.createElement('span');
-      nameEl.className = 'integration-heatmap-project-name';
-      nameEl.textContent = project.projectName || project.projectKey;
-      nameEl.title = project.projectKey;
-      rowEl.appendChild(nameEl);
-
-      const tilesEl = document.createElement('div');
-      tilesEl.className = 'integration-heatmap-tiles';
-
-      const displayRuns = [...runs].reverse();
-      displayRuns.forEach((run, index) => {
-        const tile = document.createElement('button');
-        tile.type = 'button';
-        tile.className = `integration-heatmap-tile ${run.status === 'passed' ? 'passed' : 'failed'}`;
-        tile.textContent = run.status === 'passed' ? '✅' : '❌';
-        if (selectedProjectId === project.projectId && selectedIntegrationRunId === run.id) {
-          tile.classList.add('selected');
+      // Group runs by environment
+      const runsByEnvironment = {};
+      runs.forEach((run) => {
+        const env = run.environment || 'unspecified';
+        if (!runsByEnvironment[env]) {
+          runsByEnvironment[env] = [];
         }
-        tile.title = [
-          project.projectName || project.projectKey,
-          group.groupName ? `Group: ${group.groupName}` : null,
-          `Branch: ${run.branch}`,
-          `Commit: ${shortCommit(run.commitSha)}`,
-          `${formatDateTime(run.runTimestamp)}`,
-          `Status: ${run.status.toUpperCase()}`,
-          `Pass rate: ${pct(run.passRatePercent)}`,
-        ].filter(Boolean).join('\n');
-        tile.setAttribute('aria-label', `${project.projectName || project.projectKey} — ${run.status} — ${pct(run.passRatePercent)}`);
-
-        tile.addEventListener('click', async () => {
-          if (selectedProjectId !== project.projectId) {
-            // Switching project: select it (loads runs for that project)
-            projectSelector.value = project.projectId;
-            await selectProject(project.projectId, { preferredRunId: run.id });
-            renderProjectSelector();
-          } else {
-            // Same project: synchronize run selection
-            selectedIntegrationRunId = run.id;
-            highlightSelectedRunRow();
-            renderIntegrationRunChain(currentIntegrationRunItems);
-            await loadIntegrationRunDetails(project.projectId, run.id);
-          }
-          // Re-render heatmap to update selected tile highlight
-          renderHeatmap(groups);
-        });
-
-        tilesEl.appendChild(tile);
-
-        if (index < displayRuns.length - 1) {
-          const arrow = document.createElement('span');
-          arrow.className = 'integration-heatmap-arrow';
-          arrow.textContent = '→';
-          arrow.title = 'Oldest to newest';
-          arrow.setAttribute('aria-hidden', 'true');
-          tilesEl.appendChild(arrow);
-        }
+        runsByEnvironment[env].push(run);
       });
 
-      rowEl.appendChild(tilesEl);
-      groupEl.appendChild(rowEl);
+      // Sort environments: known envs first in order, then unspecified
+      const sortedEnvironments = [
+        ...environmentOrder.filter((env) => runsByEnvironment[env]),
+        ...Object.keys(runsByEnvironment).filter((env) => !environmentOrder.includes(env)),
+      ];
+
+      const projectCardEl = document.createElement('section');
+      projectCardEl.className = 'integration-heatmap-project-card';
+      const newestProjectRun = runs[0] || null;
+      if (newestProjectRun?.status === 'passed') {
+        projectCardEl.classList.add('newest-passed');
+      } else if (newestProjectRun?.status === 'failed') {
+        projectCardEl.classList.add('newest-failed');
+      }
+
+      const projectHeaderEl = document.createElement('div');
+      projectHeaderEl.className = 'integration-heatmap-project-header';
+
+      const projectTitleEl = document.createElement('span');
+      projectTitleEl.className = 'integration-heatmap-project-name';
+      const projectDisplayName = project.projectName || project.projectKey;
+      projectTitleEl.textContent = projectDisplayName;
+      projectTitleEl.title = project.projectKey;
+      projectHeaderEl.appendChild(projectTitleEl);
+
+      const projectMetaEl = document.createElement('span');
+      projectMetaEl.className = 'integration-heatmap-project-meta';
+      projectMetaEl.textContent = `${sortedEnvironments.length} env${sortedEnvironments.length === 1 ? '' : 's'}`;
+      projectHeaderEl.appendChild(projectMetaEl);
+
+      projectCardEl.appendChild(projectHeaderEl);
+
+      const environmentListEl = document.createElement('div');
+      environmentListEl.className = 'integration-heatmap-environment-list';
+
+      // Render a row for each environment within the project card
+      for (const environment of sortedEnvironments) {
+        const envRuns = runsByEnvironment[environment];
+        const rowEl = document.createElement('div');
+        rowEl.className = 'integration-heatmap-environment-row';
+        const newestRun = envRuns.length > 0 ? envRuns[0] : null;
+        if (newestRun?.status === 'passed') {
+          rowEl.classList.add('newest-passed');
+        } else if (newestRun?.status === 'failed') {
+          rowEl.classList.add('newest-failed');
+        }
+
+        const envInfoEl = document.createElement('div');
+        envInfoEl.className = 'integration-heatmap-environment-info';
+
+        const envBadgeEl = document.createElement('span');
+        envBadgeEl.className = 'integration-heatmap-environment-badge';
+        const envLabel = environment === 'unspecified' ? '(no env)' : environment;
+        envBadgeEl.textContent = envLabel;
+        envBadgeEl.title = `${project.projectKey} - Environment: ${environment}`;
+        envInfoEl.appendChild(envBadgeEl);
+
+        const envCountEl = document.createElement('span');
+        envCountEl.className = 'integration-heatmap-environment-count';
+        envCountEl.textContent = `${envRuns.length} run${envRuns.length === 1 ? '' : 's'}`;
+        envInfoEl.appendChild(envCountEl);
+
+        rowEl.appendChild(envInfoEl);
+
+        const tilesEl = document.createElement('div');
+        tilesEl.className = 'integration-heatmap-tiles';
+
+        const displayRuns = [...envRuns].reverse();
+        displayRuns.forEach((run, index) => {
+          const tile = document.createElement('button');
+          tile.type = 'button';
+          tile.className = `integration-heatmap-tile ${run.status === 'passed' ? 'passed' : 'failed'}`;
+          tile.textContent = run.status === 'passed' ? '✅' : '❌';
+          if (selectedProjectId === project.projectId && selectedIntegrationRunId === run.id) {
+            tile.classList.add('selected');
+          }
+          tile.title = [
+            projectDisplayName,
+            group.groupName ? `Group: ${group.groupName}` : null,
+            `Environment: ${environment}`,
+            `Branch: ${run.branch}`,
+            `Commit: ${shortCommit(run.commitSha)}`,
+            `${formatDateTime(run.runTimestamp)}`,
+            `Status: ${run.status.toUpperCase()}`,
+            `Pass rate: ${pct(run.passRatePercent)}`,
+          ].filter(Boolean).join('\n');
+          tile.setAttribute('aria-label', `${projectDisplayName} [${envLabel}] — ${run.status} — ${pct(run.passRatePercent)}`);
+
+          tile.addEventListener('click', async () => {
+            if (selectedProjectId !== project.projectId) {
+              // Switching project: select it (loads runs for that project)
+              projectSelector.value = project.projectId;
+              await selectProject(project.projectId, { preferredRunId: run.id });
+              renderProjectSelector();
+            } else {
+              // Same project: synchronize run selection
+              selectedIntegrationRunId = run.id;
+              highlightSelectedRunRow();
+              renderIntegrationRunChain(currentIntegrationRunItems);
+              await loadIntegrationRunDetails(project.projectId, run.id);
+            }
+            // Re-render heatmap to update selected tile highlight
+            renderHeatmap(groups);
+          });
+
+          tilesEl.appendChild(tile);
+
+          if (index < displayRuns.length - 1) {
+            const arrow = document.createElement('span');
+            arrow.className = 'integration-heatmap-arrow';
+            arrow.textContent = '→';
+            arrow.title = 'Oldest to newest';
+            arrow.setAttribute('aria-hidden', 'true');
+            tilesEl.appendChild(arrow);
+          }
+        });
+
+        rowEl.appendChild(tilesEl);
+        environmentListEl.appendChild(rowEl);
+      }
+
+      projectCardEl.appendChild(environmentListEl);
+      groupEl.appendChild(projectCardEl);
     }
 
     integrationHeatmap.appendChild(groupEl);

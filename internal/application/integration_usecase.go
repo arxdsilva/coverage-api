@@ -693,6 +693,7 @@ type HeatmapRunItem struct {
 	RunTimestamp    string  `json:"runTimestamp"`
 	PassRatePercent float64 `json:"passRatePercent"`
 	Status          string  `json:"status"`
+	Environment     *string `json:"environment,omitempty"`
 }
 
 type HeatmapProjectItem struct {
@@ -770,6 +771,7 @@ func (uc *GetIntegrationHeatmapUseCase) Execute(ctx context.Context, in Integrat
 			RunTimestamp:    row.RunTimestamp.UTC().Format(time.RFC3339),
 			PassRatePercent: calculatePassRate(row.PassedSpecs, row.TotalSpecs),
 			Status:          row.Status,
+			Environment:     row.Environment,
 		})
 		projectMeta[row.ProjectID] = p
 	}

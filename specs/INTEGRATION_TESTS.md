@@ -69,7 +69,7 @@ The canonical input format is Ginkgo output, specifically a Ginkgo v2 JSON repor
 17. interrupted (boolean)
 18. timed_out (boolean)
 19. duration_ms (integer)
-20. environment (enum/string, optional: test, stage, production) - deployment environment
+20. environment (enum/string, optional: test, stage, prod) - deployment environment
 21. created_at (timestamp)
 
 #### IntegrationSpecResult
@@ -113,7 +113,7 @@ The canonical input format is Ginkgo output, specifically a Ginkgo v2 JSON repor
   "author": "alice",
   "triggerType": "push",
   "runTimestamp": "2026-04-25T12:00:00Z",
-  "environment": "production",
+  "environment": "prod",
   "ginkgoReport": {
     "suiteDescription": "integration suite",
     "suitePath": "./integration",

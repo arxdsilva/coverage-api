@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TYPE environment_type AS ENUM ('test', 'stage', 'production');
+CREATE TYPE environment_type AS ENUM ('test', 'stage', 'prod');
 
 CREATE TABLE IF NOT EXISTS integration_test_runs (
   id UUID PRIMARY KEY,
