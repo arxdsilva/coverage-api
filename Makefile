@@ -17,6 +17,7 @@ DATABASE_URL ?= postgres://$(DB_USER):$(DB_PASSWORD)@localhost:$(DB_PORT)/$(DB_N
 .PHONY: seed seed-docker
 .PHONY: coverage-file coverage-upload
 .PHONY: frontend-run frontend-dev
+.PHONY: update-branch
 
 COVERAGE_PROFILE ?= coverage.out
 COVERAGE_PAYLOAD ?= coverage-upload.json
@@ -47,6 +48,7 @@ help:
 	@echo "  make seed-docker        - Run seed SQL through compose seed service"
 	@echo "  make coverage-file      - Generate coverage.out and API payload JSON file"
 	@echo "  make coverage-upload    - Generate + upload coverage payload to running API"
+	@echo "  make update-branch      - Fetch and merge current branch with arxdsilva/main"
 
 deps:
 	go mod tidy
@@ -120,3 +122,6 @@ coverage-upload:
 		-api-url $(API_URL) \
 		-api-key $(API_KEY) \
 		-upload
+
+update-branch:
+	git fetch arxdsilva && git merge arxdsilva/main
