@@ -432,6 +432,11 @@ components:
           format: float
           minimum: 0
           maximum: 100
+        thresholdPercent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
         packages:
           type: array
           items:

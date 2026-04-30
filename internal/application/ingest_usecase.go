@@ -22,6 +22,7 @@ type IngestCoverageRunInput struct {
 	TriggerType          string               `json:"triggerType"`
 	RunTimestamp         string               `json:"runTimestamp"`
 	TotalCoveragePercent float64              `json:"totalCoveragePercent"`
+	ThresholdPercent     *float64             `json:"thresholdPercent,omitempty"`
 	Packages             []IngestPackageInput `json:"packages"`
 }
 
@@ -77,6 +78,11 @@ func (uc *IngestCoverageRunUseCase) Execute(ctx context.Context, in IngestCovera
 	project, created, err := uc.resolveOrCreateProject(ctx, in)
 	if err != nil {
 		return IngestCoverageRunOutput{}, err
+	}
+
+	threshold := project.GlobalThresholdPercent
+	if in.ThresholdPercent != nil {
+		threshold = *in.ThresholdPercent
 	}
 
 	var baselineRun *domain.CoverageRun
@@ -155,7 +161,7 @@ func (uc *IngestCoverageRunUseCase) Execute(ctx context.Context, in IngestCovera
 			RunTimestamp:         run.RunTimestamp.UTC().Format(time.RFC3339),
 			TotalCoveragePercent: run.TotalCoveragePercent,
 		},
-		Comparison: buildComparison(run.TotalCoveragePercent, previousTotal, project.GlobalThresholdPercent),
+		Comparison: buildComparison(run.TotalCoveragePercent, previousTotal, threshold),
 		Packages:   packageComparisons,
 	}, nil
 }
@@ -208,6 +214,9 @@ func validateIngestInput(in IngestCoverageRunInput) error {
 	}
 	if err := domain.ValidateCoveragePercent(in.TotalCoveragePercent); err != nil {
 		return NewInvalidArgument(err.Error(), map[string]any{"field": "totalCoveragePercent"})
+	}
+	if in.ThresholdPercent != nil && (*in.ThresholdPercent < 0 || *in.ThresholdPercent > 100) {
+		return NewInvalidArgument("thresholdPercent must be between 0 and 100", map[string]any{"field": "thresholdPercent"})
 	}
 	if len(in.Packages) == 0 {
 		return NewInvalidArgument("packages is required", map[string]any{"field": "packages"})

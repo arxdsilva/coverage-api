@@ -34,6 +34,7 @@ type ingestPayload struct {
 	TriggerType          string            `json:"triggerType"`
 	RunTimestamp         string            `json:"runTimestamp"`
 	TotalCoveragePercent float64           `json:"totalCoveragePercent"`
+	ThresholdPercent     *float64          `json:"thresholdPercent,omitempty"`
 	Packages             []packageCoverage `json:"packages"`
 }
 
@@ -82,6 +83,7 @@ func runCoverageUpload(args []string) {
 	commitSHA := fs.String("commit-sha", envOrDefault("COVERAGE_COMMIT_SHA", "local"), "Commit SHA")
 	author := fs.String("author", envOrDefault("COVERAGE_AUTHOR", "local"), "Author")
 	triggerType := fs.String("trigger-type", "manual", "Trigger type: push|pr|manual")
+	threshold := fs.Float64("threshold", 0, "Custom threshold percentage (0 to disable custom threshold)")
 	upload := fs.Bool("upload", false, "Upload payload to API")
 	apiURL := fs.String("api-url", envOrDefault("API_URL", "http://localhost:8080/v1/coverage-runs"), "Coverage API URL")
 	apiKey := fs.String("api-key", os.Getenv("API_KEY"), "API key value")
@@ -103,6 +105,11 @@ func runCoverageUpload(args []string) {
 		group = projectGroup
 	}
 
+	var thresh *float64
+	if *threshold > 0 {
+		thresh = threshold
+	}
+
 	payload := ingestPayload{
 		ProjectKey:           *projectKey,
 		ProjectName:          *projectName,
@@ -114,6 +121,7 @@ func runCoverageUpload(args []string) {
 		TriggerType:          *triggerType,
 		RunTimestamp:         time.Now().UTC().Format(time.RFC3339),
 		TotalCoveragePercent: total,
+		ThresholdPercent:     thresh,
 		Packages:             packages,
 	}
 
