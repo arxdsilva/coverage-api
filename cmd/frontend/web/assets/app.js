@@ -916,7 +916,7 @@ function buildHeatmapTile(item, options = {}) {
   const thresholdValue = Number(item.comparison?.thresholdPercent);
   const { compact = false } = options;
 
-  const trendClass = heatDeltaClass(delta);
+  const trendClass = threshold === 'failed' ? 'delta-neg-3' : heatDeltaClass(delta);
   const size = tileSizeForCoverage(current);
   const classNames = ['heat-tile', trendClass];
 
