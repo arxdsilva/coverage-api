@@ -16,60 +16,68 @@ Provide deterministic API responses that answer:
 
 ### 1.3 Source of Truth
 
-GitHub organization and repository pull request/review data fetched server-side via GitHub API adapters.
+GitHub organization and repository pull request/review data is fetched server-side by a background worker and persisted as PostgreSQL snapshots. API reads return the latest persisted snapshot.
 
 ## 2. Scope
 
 ### 2.1 In Scope (v1)
 
-1. Organization-level reviewer leaderboard endpoint for the last month.
+1. Organization-level reviewer leaderboard endpoint backed by persisted snapshots.
 2. Organization-level hanging PRs endpoint.
 3. Configurable time windows and limits for both endpoints.
 4. Deterministic hanging classification logic.
 5. API key authentication on all endpoints.
-6. Optional in-memory caching to reduce GitHub API pressure.
+6. Worker-based periodic sync from GitHub into PostgreSQL snapshots.
+7. Frontend-selectable reviewer windows limited to `30`, `60`, or `90` days.
 
 ### 2.2 Out of Scope (v1)
 
 1. Writing back to GitHub (labels, comments, assignments, merge actions).
 2. Team-level leaderboards or per-team SLA policies.
-3. Historical warehouse and trend charts persisted in PostgreSQL.
+3. Historical trend charting UI beyond latest snapshot windows.
 4. Per-user privacy controls.
 
 ## 3. Key Decisions and Assumptions
 
 1. Browser clients do not call GitHub directly; frontend uses coverage-api only.
-2. coverage-api reads GitHub data using a server-side token from environment.
-3. Results are near-real-time and can be slightly delayed by cache TTL.
+2. A dedicated worker reads GitHub data using a server-side token from environment.
+3. API responses are snapshot-based and can lag GitHub by the worker sync interval.
 4. Missing review events produce zero counts; no synthetic data is inferred.
 5. Hanging PR logic is rule-based and transparent in the response payload.
 
 ## 4. High-Level Architecture
 
-1. New application ports:
-   - `GitHubOrgInsightsService`
-   - `GitHubCache` (optional)
-2. New adapter:
-   - `internal/adapters/github` for GitHub REST/GraphQL calls.
+1. Application ports:
+  - `GitHubOrgInsightsService` (worker read-from-GitHub)
+  - `GitHubOrgInsightsRepository` (snapshot writes/reads)
+2. Adapters:
+  - `internal/adapters/github` for worker GitHub REST calls.
+  - `internal/adapters/postgres` for snapshot persistence and retrieval.
 3. New HTTP handlers under existing API layer:
    - org leaderboard
    - org hanging PRs
-4. Dependency direction remains inward (hexagonal boundaries preserved).
+4. Dedicated worker command:
+  - `cmd/githubinsightsworker`
+5. Dependency direction remains inward (hexagonal boundaries preserved).
 
 ## 5. Configuration
 
 Required/optional environment variables:
 
-1. `GITHUB_TOKEN` (required in environments where org insights are enabled)
+1. `GITHUB_TOKEN` (required by insights worker)
 2. `GITHUB_API_BASE_URL` (optional, default `https://api.github.com`)
 3. `GITHUB_INSIGHTS_CACHE_TTL_SECONDS` (optional, default `60`)
 4. `GITHUB_INSIGHTS_MAX_REPOS` (optional safety cap, default `200`)
+5. `GITHUB_ORGS` (required, comma-separated organizations for sync)
+6. `GITHUB_INSIGHTS_WINDOW_DAYS` (optional, supported values `30,60,90`, default `30,60,90`)
+7. `GITHUB_INSIGHTS_SYNC_INTERVAL_SECONDS` (optional, default `3600`)
 
 Validation rules:
 
-1. If org insights endpoints are enabled and `GITHUB_TOKEN` is missing, startup fails fast.
+1. Worker startup fails fast when `GITHUB_TOKEN` or `GITHUB_ORGS` is missing.
 2. `GITHUB_INSIGHTS_CACHE_TTL_SECONDS` must be >= 0.
 3. `GITHUB_INSIGHTS_MAX_REPOS` must be >= 1.
+4. `GITHUB_INSIGHTS_WINDOW_DAYS` values outside `30`, `60`, `90` are ignored.
 
 ## 6. API Contract (v1)
 
@@ -99,15 +107,9 @@ Query params:
 
 Behavior:
 
-1. Resolve repository set for the org (all repos or requested subset).
-2. Fetch pull requests updated within the requested window.
-3. Aggregate review activity per reviewer login.
-4. Sort by:
-   - total reviews desc
-   - approvals desc
-   - latestReviewAt desc
-   - reviewer asc
-5. Apply `limit` after sorting.
+1. Read latest reviewer snapshot for (`org`, `windowDays`) from PostgreSQL.
+2. Return persisted reviewer ordering and apply `limit` over snapshot rows.
+3. Return `404 NOT_FOUND` when no snapshot exists for (`org`, `windowDays`).
 
 Response example:
 
@@ -153,12 +155,11 @@ Query params:
 6. `includeDrafts` (optional boolean, default false)
 7. `sort` (optional enum: `staleness_desc`, `open_time_desc`; default `staleness_desc`)
 
-Hanging classification rules (v1):
+Hanging classification rules (worker-time, v1):
 
-1. PR state must be `open`.
-2. PR age must be >= `minOpenHours`.
-3. Last activity age must be >= `minIdleHours`.
-4. At least one of the following reasons must apply:
+1. Worker snapshots only include open PRs that match hanging rules at sync time.
+2. API request-time filters (`minOpenHours`, `minIdleHours`, `author`, `repo`, `includeDrafts`) are applied on the latest snapshot.
+3. At least one of the following reasons must apply:
    - `awaiting-review`: no completed review exists.
    - `changes-requested`: latest review state is changes requested and no newer author push.
    - `awaiting-author`: latest review requests changes and author has pushed but PR is still idle beyond threshold.
@@ -230,7 +231,7 @@ Error payload shape:
 ## 9. Validation Rules
 
 1. `org` path param required and non-empty.
-2. `windowDays` range: 1 to 365.
+2. `windowDays` allowed values on frontend: `30`, `60`, `90`.
 3. `limit` range:
    - leaderboard: 1 to 100
    - hanging PRs: 1 to 200
@@ -238,14 +239,12 @@ Error payload shape:
 5. `minIdleHours` and `minOpenHours` must be >= 1.
 6. If `repo` is provided, each value must be unique.
 
-## 10. Caching and Rate Limit Strategy
+## 10. Sync and Freshness Strategy
 
-1. Cache key includes endpoint + org + normalized query params.
-2. Default TTL is 60 seconds.
-3. Stale cache may be returned when GitHub is temporarily unavailable if cached value exists and is younger than 5 minutes.
-4. Response includes metadata headers when possible:
-   - `X-Data-Source: live|cache`
-   - `X-Cache-Age-Seconds: <n>`
+1. Worker syncs each configured org periodically (default every 1 hour).
+2. Reviewer snapshots are persisted per (`org`, `windowDays`) for supported windows `30`, `60`, `90`.
+3. Hanging PR snapshots are persisted per org and read as latest snapshot.
+4. API responses are deterministic for latest persisted snapshot state.
 
 ## 11. Dedicated Org Insights Screen (Product Specification)
 
@@ -274,8 +273,8 @@ Non-goals:
 
     - `org`
     - `windowDays`
-    - `from`
-    - `to`
+    - `from` (API-supported, not exposed by v1 frontend controls)
+    - `to` (API-supported, not exposed by v1 frontend controls)
     - `repo` (repeatable)
     - `limit`
     - `minIdleHours`
@@ -329,9 +328,7 @@ Header behavior:
 Required filters:
 
 1. Organization selector/input (required).
-2. Date mode toggle:
-    - Relative (`windowDays`)
-    - Absolute (`from` + `to`)
+2. Relative `windowDays` selector with allowed values `30`, `60`, `90`.
 3. Repository multi-select.
 4. Reviewer leaderboard limit.
 5. Hanging queue controls:
@@ -510,9 +507,10 @@ Persist per route (`/org-insights`) using local storage:
 ### 11.15 Performance and Reliability Requirements
 
 1. Target P95 time-to-first-data for cached responses <= 1.0s.
-2. Target P95 time-to-first-data for live responses <= 2.5s (excluding external provider incidents).
-3. Frontend must render first meaningful content with skeletons immediately.
-4. Screen must tolerate API partial failures without full-page reset.
+2. Target P95 API response time <= 1.5s for snapshot reads.
+3. Worker sync duration and failure rate must be monitored independently from API response latency.
+4. Frontend must render first meaningful content with skeletons immediately.
+5. Screen must tolerate API partial failures without full-page reset.
 
 ### 11.16 Telemetry and Product Analytics
 
@@ -529,9 +527,10 @@ Track these client-side events:
 Track these server-side counters/histograms:
 
 1. Request count by endpoint/org.
-2. Upstream GitHub latency.
-3. Cache hit ratio.
-4. Rate-limit error count.
+2. Snapshot read latency.
+3. Worker sync duration.
+4. Worker sync failure count by org.
+5. Rate-limit error count.
 
 ### 11.17 Frontend API Proxy Routes
 
@@ -567,7 +566,7 @@ Proxied API routes (coverage-api):
 API criteria:
 
 1. `GET /v1/github/orgs/{org}/reviewers/leaderboard` returns deterministic sorted reviewer metrics.
-2. `GET /v1/github/orgs/{org}/pull-requests/hanging` returns only open PRs matching hanging rules.
+2. `GET /v1/github/orgs/{org}/pull-requests/hanging` returns snapshot-backed hanging PRs with request-time filtering.
 3. Invalid query parameters return `400 INVALID_ARGUMENT` with field details.
 4. GitHub rate-limit scenarios map to `429 RATE_LIMITED`.
 5. API key auth is enforced consistently.
@@ -577,11 +576,12 @@ Frontend screen criteria:
 1. Org Insights exists as dedicated route `/org-insights`.
 2. Screen shows independent modules for leaderboard and hanging PR queue.
 3. Filters are deep-linkable via URL query params and restored on load.
-4. Manual refresh and auto-refresh follow shared refresh semantics.
-5. Org Insights auto-refresh defaults to `1h` unless user has an existing saved preference.
-6. Module-level failures do not blank the entire screen.
-7. User can open PR context drawer and navigate to GitHub from each row.
-8. Frontend renders both datasets without direct GitHub API access.
+4. Frontend window selector only allows `30`, `60`, or `90` day options.
+5. Manual refresh and auto-refresh follow shared refresh semantics.
+6. Org Insights auto-refresh defaults to `1h` unless user has an existing saved preference.
+7. Module-level failures do not blank the entire screen.
+8. User can open PR context drawer and navigate to GitHub from each row.
+9. Frontend renders both datasets without direct GitHub API access.
 
 ## 14. Future Enhancements (Post-v1)
 
