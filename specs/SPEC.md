@@ -500,3 +500,13 @@ That extension defines:
 2. Integration test run persistence and comparison model.
 3. API endpoints under `/v1/.../integration-test-runs`.
 4. Frontend integration test health and failed-specs views.
+
+## 16. GitHub Org Insights Extension
+
+GitHub organization reviewer and pull request health analytics are specified separately in `specs/GITHUB_ORG_INSIGHTS.md`.
+
+That extension defines:
+1. Reviewer leaderboard contract at org level.
+2. Hanging pull request detection rules and API contract.
+3. Query/filter model for org-wide or repo-scoped insights.
+4. Frontend integration expectations using existing API proxy behavior.

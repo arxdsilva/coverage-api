@@ -54,6 +54,23 @@ Navigation behavior:
 4. Browser back/forward navigation between `/` and `/integration` is supported.
 5. Navigation works even when JavaScript fails to initialize because these controls are real links (`<a href=...>`).
 
+## Org Insights Screen Navigation
+
+GitHub organization insights are available on a dedicated frontend route:
+
+- `/org-insights`
+
+Navigation behavior:
+
+1. The main sidebar includes an `Org Insights` control that navigates to `/org-insights`.
+2. The org insights screen includes controls to navigate back to `/` and `/integration`.
+3. Home, integration, and org insights remain separate route-level documents and scripts:
+	- `/` serves `index.html` with `assets/app.js`
+	- `/integration` serves `integration.html` with `assets/integration.js`
+	- `/org-insights` serves the org-insights document with a dedicated script bundle
+4. Browser back/forward navigation between `/`, `/integration`, and `/org-insights` is supported.
+5. Navigation should continue to work with standard anchor links so base route transitions remain functional even if JavaScript fails to initialize.
+
 ## URL Query Parameters
 
 Both the home page and integration screen support opening overlays via URL query parameters:
@@ -122,9 +139,9 @@ The frontend must support explicit manual refresh on both primary screens.
 ### Auto Refresh Configuration
 
 1. Each screen must expose an auto-refresh control alongside the manual refresh action.
-2. The control must allow choosing one of these intervals: `off`, `15s`, `30s`, `60s`, `5m`.
+2. The control must allow choosing one of these intervals: `off`, `15s`, `30s`, `60s`, `5m`, `1h`.
 3. `off` disables automatic polling; any other value enables periodic refresh using the selected interval.
-4. The selected interval must be configurable independently per route (`/` and `/integration`).
+4. The selected interval must be configurable independently per route (`/`, `/integration`, and `/org-insights`).
 5. The selected interval should persist across reloads for the same route, for example via browser local storage.
 6. A manual refresh and an automatic refresh must execute the same underlying refresh workflow for that screen.
 7. If a refresh is already running when the next interval fires, the overlapping automatic refresh must be skipped rather than queued.
@@ -139,6 +156,7 @@ The frontend must support explicit manual refresh on both primary screens.
 	- `Refreshing now (...)` while a refresh is in flight
 	- `Paused (...) while tab is hidden.` when polling is paused by document visibility
 15. Countdown/status text must update automatically without requiring manual user interaction.
+16. Org Insights (`/org-insights`) must default to automatic refresh at `1h` for first-time visitors when no stored preference exists.
 
 ### Home Screen Refresh Scope
 
@@ -169,6 +187,18 @@ The frontend must support explicit manual refresh on both primary screens.
 6. The integration heatmap overlay must also support its own local `Reload` control that refreshes only the heatmap query and preserves overlay filters.
 7. The per-project integration table `Reload` control must refresh only the active project's comparison, run list, run chain, and failed-spec details; it must not implicitly reset heatmap filters.
 8. When integration-screen auto refresh is enabled, each automatic interval must run this same screen-level refresh scope.
+
+### Org Insights Screen Refresh Scope
+
+1. Trigger: the primary `Refresh` button on `/org-insights`.
+2. An org-insights refresh must refetch both core datasets in parallel:
+	- reviewer leaderboard for the selected org/filter window
+	- hanging PR list for the selected org/filter criteria
+3. If one dataset fails and the other succeeds, the successful module must update while the failing module shows a localized error state.
+4. Refresh must preserve current filter controls, URL query params, selected row/drawer state (when still valid), and auto-refresh interval.
+5. If the currently selected PR row no longer exists after refresh, the drawer should close gracefully and keep the user at the same scroll position.
+6. Automatic refresh for `/org-insights` runs this same scope and must not overlap with an in-flight refresh.
+7. Org Insights auto-refresh is enabled by default at `1h`, mirroring integration-screen auto-refresh mechanics with a longer cadence.
 
 ### Loading and Error Behavior
 
@@ -299,6 +329,8 @@ The frontend server exposes unauthenticated GET routes for browser use:
 - `GET /api/projects/{projectId}/coverage-runs`
 - `GET /api/projects/{projectId}/coverage-runs/latest-comparison`
 - `GET /api/projects/{projectId}/contributors`
+- `GET /api/github/orgs/{org}/reviewers/leaderboard`
+- `GET /api/github/orgs/{org}/pull-requests/hanging`
 
 These are proxied to:
 
@@ -307,3 +339,5 @@ These are proxied to:
 - `GET /v1/projects/{projectId}/coverage-runs`
 - `GET /v1/projects/{projectId}/coverage-runs/latest-comparison`
 - `GET /v1/projects/{projectId}/contributors`
+- `GET /v1/github/orgs/{org}/reviewers/leaderboard`
+- `GET /v1/github/orgs/{org}/pull-requests/hanging`
