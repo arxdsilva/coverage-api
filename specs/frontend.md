@@ -200,6 +200,12 @@ The frontend must support explicit manual refresh on both primary screens.
 6. Automatic refresh for `/org-insights` runs this same scope and must not overlap with an in-flight refresh.
 7. Org Insights auto-refresh is enabled by default at `1h`, mirroring integration-screen auto-refresh mechanics with a longer cadence.
 
+Org Insights frontend filter constraints:
+
+1. The `windowDays` selector is constrained to `30`, `60`, or `90`.
+2. If URL query params include another `windowDays` value, the UI normalizes it to `30` before querying the API.
+3. Requests from `/org-insights` always send one of `30`, `60`, or `90` for `windowDays`.
+
 ### Loading and Error Behavior
 
 1. Refreshing a panel should preserve the previous rendered state until replacement data arrives, unless an empty/loading placeholder is materially clearer.

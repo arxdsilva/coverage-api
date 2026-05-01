@@ -56,8 +56,7 @@ GitHub organization and repository pull request/review data is fetched server-si
 3. New HTTP handlers under existing API layer:
    - org leaderboard
    - org hanging PRs
-4. Dedicated worker command:
-  - `cmd/githubinsightsworker`
+4. GitHub insights sync worker loop runs inside API runtime.
 5. Dependency direction remains inward (hexagonal boundaries preserved).
 
 ## 5. Configuration
