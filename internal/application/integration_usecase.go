@@ -359,9 +359,6 @@ func validateIntegrationIngestInput(in IngestIntegrationRunInput) error {
 	}
 
 	for i, spec := range in.GinkgoReport.SpecReports {
-		if strings.TrimSpace(spec.LeafNodeText) == "" {
-			return NewInvalidArgument("leafNodeText is required", map[string]any{"field": fmt.Sprintf("ginkgoReport.specReports[%d].leafNodeText", i)})
-		}
 		if !isAcceptedGinkgoState(spec.State) {
 			return NewInvalidArgument("state is invalid", map[string]any{"field": fmt.Sprintf("ginkgoReport.specReports[%d].state", i)})
 		}
