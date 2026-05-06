@@ -30,7 +30,7 @@ help:
 	@echo "  make deps               - Download dependencies"
 	@echo "  make fmt                - Format Go files"
 	@echo "  make test               - Run tests"
-	@echo "  make run                - Run API locally"
+	@echo "  make run                - Run API locally (includes GitHub insights worker loop)"
 	@echo "  make frontend-run       - Run frontend dashboard locally on :8090"
 	@echo "  make frontend-dev       - Run API and frontend together (local)"
 	@echo "  make compose-up         - Start db + migrate + seed + api + frontend via docker compose"
@@ -58,14 +58,14 @@ test:
 	go test ./...
 
 run:
-	DATABASE_URL="$(DATABASE_URL)" go run ./cmd/api
+	GITHUB_ORGS="$(GITHUB_ORGS)" GITHUB_TOKEN="$(GITHUB_TOKEN)" DATABASE_URL="$(DATABASE_URL)" go run ./cmd/api
 
 frontend-run:
 	FRONTEND_ADDR=":8090" API_BASE_URL="http://localhost:8080" API_KEY_SECRET="$(API_KEY)" go run ./cmd/frontend
 
 frontend-dev:
 	@echo "Run in two terminals:"
-	@echo "  1) DATABASE_URL=\"$(DATABASE_URL)\" API_KEY_SECRET=\"$(API_KEY)\" go run ./cmd/api"
+	@echo "  1) DATABASE_URL=\"$(DATABASE_URL)\" API_KEY_SECRET=\"$(API_KEY)\" GITHUB_TOKEN=\"$$GITHUB_TOKEN\" GITHUB_ORGS=\"$$GITHUB_ORGS\" go run ./cmd/api"
 	@echo "  2) FRONTEND_ADDR=\":8090\" API_BASE_URL=\"http://localhost:8080\" API_KEY_SECRET=\"$(API_KEY)\" go run ./cmd/frontend"
 
 compose-up:

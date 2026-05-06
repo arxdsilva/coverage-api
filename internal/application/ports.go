@@ -74,3 +74,10 @@ type IDGenerator interface {
 type TransactionManager interface {
 	WithinTx(ctx context.Context, fn func(ctx context.Context) error) error
 }
+
+type GitHubOrgInsightsRepository interface {
+	SaveReviewersSnapshot(ctx context.Context, snapshot GitHubReviewerSnapshot) error
+	GetLatestReviewersSnapshot(ctx context.Context, org string, windowDays int) (GitHubReviewerSnapshot, error)
+	SaveHangingSnapshot(ctx context.Context, snapshot GitHubHangingSnapshot) error
+	GetLatestHangingSnapshot(ctx context.Context, org string) (GitHubHangingSnapshot, error)
+}

@@ -8,6 +8,7 @@ const (
 	CodeInvalidArgument ErrorCode = "INVALID_ARGUMENT"
 	CodeNotFound        ErrorCode = "NOT_FOUND"
 	CodeUnauthenticated ErrorCode = "UNAUTHENTICATED"
+	CodeRateLimited     ErrorCode = "RATE_LIMITED"
 	CodeInternal        ErrorCode = "INTERNAL"
 )
 
@@ -37,6 +38,10 @@ func NewNotFound(message string, details map[string]any) *AppError {
 
 func NewUnauthenticated(message string) *AppError {
 	return &AppError{Code: CodeUnauthenticated, Message: message}
+}
+
+func NewRateLimited(message string, details map[string]any) *AppError {
+	return &AppError{Code: CodeRateLimited, Message: message, Details: details}
 }
 
 func NewInternal(message string, err error) *AppError {

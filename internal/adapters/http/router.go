@@ -38,6 +38,8 @@ func NewRouter(handler *Handler, auth application.APIKeyAuthenticator, apiKeyHea
 		v1.Get("/projects/{projectId}/integration-test-runs/{runId}", handler.GetIntegrationRun)
 		v1.Get("/projects/{projectId}/branches", handler.ListBranches)
 		v1.Get("/projects/{projectId}/contributors", handler.ListContributors)
+		v1.Get("/github/orgs/{org}/reviewers/leaderboard", handler.ListGitHubReviewersLeaderboard)
+		v1.Get("/github/orgs/{org}/pull-requests/hanging", handler.ListGitHubHangingPullRequests)
 	})
 
 	return r

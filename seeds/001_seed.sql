@@ -257,3 +257,128 @@ VALUES
   ('da000000-0000-0000-0000-000000000001', 'ca000000-0000-0000-0000-000000000001', 'Ranking > recalculates BM25 boosts', 'recalculates BM25 boosts', 'passed', 123, NULL, NULL, NULL),
   ('da000000-0000-0000-0000-000000000002', 'ca000000-0000-0000-0000-000000000001', 'Index > handles alias swap with no downtime', 'handles alias swap with no downtime', 'passed', 119, NULL, NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
+
+-- GitHub Org Insights snapshots (for /org-insights)
+INSERT INTO github_reviewer_snapshots (
+  id, org_name, window_days, window_from, window_to,
+  repositories_scanned, pull_requests_considered, total_review_events, generated_at
+)
+VALUES
+  ('f3000000-0000-0000-0000-000000000030', 'acme', 30, NOW() - INTERVAL '30 day', NOW(), 9, 146, 412, NOW() - INTERVAL '35 minute'),
+  ('f6000000-0000-0000-0000-000000000060', 'acme', 60, NOW() - INTERVAL '60 day', NOW(), 10, 301, 867, NOW() - INTERVAL '35 minute'),
+  ('f9000000-0000-0000-0000-000000000090', 'acme', 90, NOW() - INTERVAL '90 day', NOW(), 10, 455, 1294, NOW() - INTERVAL '35 minute')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO github_reviewer_entries (
+  id, snapshot_id, login, display_name,
+  total_reviews, approvals, change_requests, comments,
+  unique_pull_requests_reviewed, repos_reviewed, latest_review_at
+)
+VALUES
+  ('f3010000-0000-0000-0000-000000000001', 'f3000000-0000-0000-0000-000000000030', 'alice', 'Alice Doe', 82, 49, 11, 22, 61, 8, NOW() - INTERVAL '2 hour'),
+  ('f3010000-0000-0000-0000-000000000002', 'f3000000-0000-0000-0000-000000000030', 'maria', 'Maria Chen', 73, 44, 9, 20, 54, 7, NOW() - INTERVAL '5 hour'),
+  ('f3010000-0000-0000-0000-000000000003', 'f3000000-0000-0000-0000-000000000030', 'devon', 'Devon Patel', 59, 31, 12, 16, 43, 6, NOW() - INTERVAL '8 hour'),
+  ('f6010000-0000-0000-0000-000000000001', 'f6000000-0000-0000-0000-000000000060', 'alice', 'Alice Doe', 164, 97, 23, 44, 122, 9, NOW() - INTERVAL '2 hour'),
+  ('f6010000-0000-0000-0000-000000000002', 'f6000000-0000-0000-0000-000000000060', 'maria', 'Maria Chen', 145, 87, 18, 40, 108, 8, NOW() - INTERVAL '5 hour'),
+  ('f6010000-0000-0000-0000-000000000003', 'f6000000-0000-0000-0000-000000000060', 'devon', 'Devon Patel', 121, 66, 26, 29, 89, 7, NOW() - INTERVAL '8 hour'),
+  ('f9010000-0000-0000-0000-000000000001', 'f9000000-0000-0000-0000-000000000090', 'alice', 'Alice Doe', 247, 148, 35, 64, 183, 10, NOW() - INTERVAL '2 hour'),
+  ('f9010000-0000-0000-0000-000000000002', 'f9000000-0000-0000-0000-000000000090', 'maria', 'Maria Chen', 219, 132, 30, 57, 162, 9, NOW() - INTERVAL '5 hour'),
+  ('f9010000-0000-0000-0000-000000000003', 'f9000000-0000-0000-0000-000000000090', 'devon', 'Devon Patel', 178, 97, 41, 40, 134, 8, NOW() - INTERVAL '8 hour')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO github_hanging_snapshots (
+  id, org_name, repositories_scanned, open_pull_requests_considered,
+  hanging_pull_requests, generated_at
+)
+VALUES
+  ('fa000000-0000-0000-0000-000000000001', 'acme', 10, 203, 4, NOW() - INTERVAL '35 minute')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO github_hanging_items (
+  id, snapshot_id, repository_name, pr_number, title, url,
+  author, draft, created_at_pr, updated_at_pr, last_activity_at,
+  age_hours, idle_hours, review_state, mergeable_state,
+  requested_reviewers, labels, reasons
+)
+VALUES
+  (
+    'fa010000-0000-0000-0000-000000000001',
+    'fa000000-0000-0000-0000-000000000001',
+    'coverage-api',
+    1284,
+    'Refactor comparison baseline selection',
+    'https://github.com/acme/coverage-api/pull/1284',
+    'devon',
+    FALSE,
+    NOW() - INTERVAL '11 day',
+    NOW() - INTERVAL '4 day',
+    NOW() - INTERVAL '4 day',
+    264,
+    96,
+    'changes_requested',
+    'dirty',
+    ARRAY['alice','maria'],
+    ARRAY['backend','api'],
+    ARRAY['changes-requested','merge-conflict']
+  ),
+  (
+    'fa010000-0000-0000-0000-000000000002',
+    'fa000000-0000-0000-0000-000000000001',
+    'payments',
+    914,
+    'Harden fraud retry envelope handling',
+    'https://github.com/acme/payments/pull/914',
+    'maria',
+    FALSE,
+    NOW() - INTERVAL '7 day',
+    NOW() - INTERVAL '3 day',
+    NOW() - INTERVAL '3 day',
+    168,
+    72,
+    '',
+    'clean',
+    ARRAY['devon'],
+    ARRAY['payments','risk'],
+    ARRAY['awaiting-review']
+  ),
+  (
+    'fa010000-0000-0000-0000-000000000003',
+    'fa000000-0000-0000-0000-000000000001',
+    'webapp',
+    2077,
+    'Split dashboard hydration into staged loaders',
+    'https://github.com/acme/webapp/pull/2077',
+    'alice',
+    TRUE,
+    NOW() - INTERVAL '9 day',
+    NOW() - INTERVAL '5 day',
+    NOW() - INTERVAL '5 day',
+    216,
+    120,
+    'commented',
+    'blocked',
+    ARRAY['maria'],
+    ARRAY['frontend'],
+    ARRAY['merge-conflict']
+  ),
+  (
+    'fa010000-0000-0000-0000-000000000004',
+    'fa000000-0000-0000-0000-000000000001',
+    'orders',
+    1551,
+    'Finalize partial-cancel compensation flow',
+    'https://github.com/acme/orders/pull/1551',
+    'devon',
+    FALSE,
+    NOW() - INTERVAL '8 day',
+    NOW() - INTERVAL '3 day',
+    NOW() - INTERVAL '3 day',
+    192,
+    74,
+    'changes_requested',
+    'clean',
+    ARRAY['alice'],
+    ARRAY['orders','workflow'],
+    ARRAY['awaiting-author']
+  )
+ON CONFLICT (id) DO NOTHING;

@@ -27,6 +27,8 @@ type Handler struct {
 	getIntegrationHeatmap       *application.GetIntegrationHeatmapUseCase
 	listBranches                *application.ListBranchesUseCase
 	listContributors            *application.ListContributorsUseCase
+	listGitHubReviewers         *application.ListGitHubReviewersLeaderboardUseCase
+	listGitHubHangingPRs        *application.ListGitHubHangingPullRequestsUseCase
 }
 
 func NewHandler(
@@ -42,6 +44,8 @@ func NewHandler(
 	getIntegrationHeatmap *application.GetIntegrationHeatmapUseCase,
 	listBranches *application.ListBranchesUseCase,
 	listContributors *application.ListContributorsUseCase,
+	listGitHubReviewers *application.ListGitHubReviewersLeaderboardUseCase,
+	listGitHubHangingPRs *application.ListGitHubHangingPullRequestsUseCase,
 ) *Handler {
 	return &Handler{
 		ingest:                      ingest,
@@ -56,6 +60,8 @@ func NewHandler(
 		getIntegrationHeatmap:       getIntegrationHeatmap,
 		listBranches:                listBranches,
 		listContributors:            listContributors,
+		listGitHubReviewers:         listGitHubReviewers,
+		listGitHubHangingPRs:        listGitHubHangingPRs,
 	}
 }
 
@@ -397,6 +403,82 @@ func (h *Handler) GetIntegrationHeatmap(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, out)
 }
 
+func (h *Handler) ListGitHubReviewersLeaderboard(w http.ResponseWriter, r *http.Request) {
+	requestID := chiMiddleware.GetReqID(r.Context())
+	org := chi.URLParam(r, "org")
+	q := r.URL.Query()
+
+	limit, _ := strconv.Atoi(q.Get("limit"))
+	windowDays, _ := strconv.Atoi(q.Get("windowDays"))
+
+	var from *time.Time
+	if fromRaw := q.Get("from"); fromRaw != "" {
+		parsed, err := time.Parse(time.RFC3339, fromRaw)
+		if err != nil {
+			slog.Warn("operation", "name", "list_github_reviewers_leaderboard", "stage", "validation_failed", "request_id", requestID, "field", "from", "error", err)
+			writeError(w, http.StatusBadRequest, application.NewInvalidArgument("from must be RFC3339", map[string]any{"field": "from"}))
+			return
+		}
+		from = &parsed
+	}
+
+	var to *time.Time
+	if toRaw := q.Get("to"); toRaw != "" {
+		parsed, err := time.Parse(time.RFC3339, toRaw)
+		if err != nil {
+			slog.Warn("operation", "name", "list_github_reviewers_leaderboard", "stage", "validation_failed", "request_id", requestID, "field", "to", "error", err)
+			writeError(w, http.StatusBadRequest, application.NewInvalidArgument("to must be RFC3339", map[string]any{"field": "to"}))
+			return
+		}
+		to = &parsed
+	}
+
+	out, err := h.listGitHubReviewers.Execute(r.Context(), application.ListGitHubReviewersLeaderboardInput{
+		Org:        org,
+		From:       from,
+		To:         to,
+		WindowDays: windowDays,
+		Limit:      limit,
+		Repos:      q["repo"],
+	})
+	if err != nil {
+		slog.Error("operation", "name", "list_github_reviewers_leaderboard", "stage", "execute_failed", "request_id", requestID, "org", org, "error", err)
+		writeAppError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (h *Handler) ListGitHubHangingPullRequests(w http.ResponseWriter, r *http.Request) {
+	requestID := chiMiddleware.GetReqID(r.Context())
+	org := chi.URLParam(r, "org")
+	q := r.URL.Query()
+
+	limit, _ := strconv.Atoi(q.Get("limit"))
+	minIdleHours, _ := strconv.Atoi(q.Get("minIdleHours"))
+	minOpenHours, _ := strconv.Atoi(q.Get("minOpenHours"))
+	includeDrafts, _ := strconv.ParseBool(q.Get("includeDrafts"))
+
+	out, err := h.listGitHubHangingPRs.Execute(r.Context(), application.ListGitHubHangingPullRequestsInput{
+		Org:           org,
+		Limit:         limit,
+		MinIdleHours:  minIdleHours,
+		MinOpenHours:  minOpenHours,
+		Repos:         q["repo"],
+		Author:        q.Get("author"),
+		IncludeDrafts: includeDrafts,
+		Sort:          q.Get("sort"),
+	})
+	if err != nil {
+		slog.Error("operation", "name", "list_github_hanging_pull_requests", "stage", "execute_failed", "request_id", requestID, "org", org, "error", err)
+		writeAppError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, out)
+}
+
 func writeAppError(w http.ResponseWriter, err error) {
 	var appErr *application.AppError
 	if errors.As(err, &appErr) {
@@ -407,6 +489,8 @@ func writeAppError(w http.ResponseWriter, err error) {
 			writeError(w, http.StatusNotFound, appErr)
 		case application.CodeUnauthenticated:
 			writeError(w, http.StatusUnauthorized, appErr)
+		case application.CodeRateLimited:
+			writeError(w, http.StatusTooManyRequests, appErr)
 		default:
 			writeError(w, http.StatusInternalServerError, appErr)
 		}

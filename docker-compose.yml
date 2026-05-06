@@ -68,6 +68,13 @@ services:
       API_KEY_SECRET: dev-local-key
       DATABASE_URL: postgres://coverage:coverage@db:5432/coverage?sslmode=disable
       SHUTDOWN_TIMEOUT_SECONDS: "10"
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-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} 
+      GITHUB_ORGS: ${GITHUB_ORGS:-LodgeLink-Inc}
+      GITHUB_INSIGHTS_WINDOW_DAYS: ${GITHUB_INSIGHTS_WINDOW_DAYS:-30,60,90}
+      GITHUB_INSIGHTS_SYNC_INTERVAL_SECONDS: ${GITHUB_INSIGHTS_SYNC_INTERVAL_SECONDS:-3600}
+      GITHUB_API_BASE_URL: ${GITHUB_API_BASE_URL:-https://api.github.com}
+      GITHUB_INSIGHTS_MAX_REPOS: ${GITHUB_INSIGHTS_MAX_REPOS:-200}
+      GITHUB_INSIGHTS_CACHE_TTL_SECONDS: ${GITHUB_INSIGHTS_CACHE_TTL_SECONDS:-60}
     depends_on:
       seed:
         condition: service_completed_successfully

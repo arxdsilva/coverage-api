@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Coverage Org Insights</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <main id="appShell" class="app-shell">
+      <aside class="sidebar card">
+        <div class="sidebar-header">
+          <button id="toggleSidebar" class="btn sidebar-toggle" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar">◂</button>
+          <p class="eyebrow">Open Coverage</p>
+          <h1>Org Insights</h1>
+          <label class="sidebar-control" for="orgAutoRefreshInterval">
+            <span class="eyebrow">Auto Refresh</span>
+            <select id="orgAutoRefreshInterval" class="branch-select sidebar-select">
+              <option value="off">Off</option>
+              <option value="15s">Every 15s</option>
+              <option value="30s">Every 30s</option>
+              <option value="60s">Every 60s</option>
+              <option value="5m">Every 5m</option>
+              <option value="1h">Every 1h</option>
+            </select>
+            <p id="orgAutoRefreshStatus" class="muted sidebar-help">Scheduled every 1h.</p>
+            <div class="auto-refresh-progress" aria-hidden="true">
+              <span id="orgAutoRefreshProgressBar" class="auto-refresh-progress-bar"></span>
+            </div>
+          </label>
+          <button id="orgRefresh" class="btn">Refresh</button>
+          <a class="btn btn-link" href="/">Home</a>
+          <a class="btn btn-link" href="/integration">Integration Tests</a>
+        </div>
+      </aside>
+
+      <section class="content content-integration">
+        <section class="org-screen card">
+          <div class="org-screen-head">
+            <div>
+              <p class="eyebrow">GitHub</p>
+              <h3>Organization Insights</h3>
+              <p id="orgLastUpdated" class="muted">No data loaded yet.</p>
+            </div>
+          </div>
+
+          <div class="org-filters">
+            <input id="orgInput" class="project-search" type="text" placeholder="GitHub org (required)" />
+            <input id="repoInput" class="project-search" type="text" placeholder="Repos (comma-separated, optional)" />
+            <input id="authorInput" class="project-search" type="text" placeholder="Author filter (optional)" />
+            <select id="windowDaysInput" class="branch-select">
+              <option value="30" selected>Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+            <select id="sortInput" class="branch-select">
+              <option value="staleness_desc" selected>Sort by staleness</option>
+              <option value="open_time_desc">Sort by open age</option>
+            </select>
+            <input id="minIdleHoursInput" class="project-search small-input" type="number" min="1" value="48" />
+            <input id="minOpenHoursInput" class="project-search small-input" type="number" min="1" value="72" />
+            <label class="org-checkbox"><input id="includeDraftsInput" type="checkbox" /> Include drafts</label>
+            <button id="applyFilters" class="btn">Apply</button>
+          </div>
+
+          <section class="org-kpis">
+            <article class="card stat">
+              <p class="label">Hanging PRs</p>
+              <p id="kpiHanging" class="value">-</p>
+            </article>
+            <article class="card stat">
+              <p class="label">Open PRs Considered</p>
+              <p id="kpiOpenConsidered" class="value">-</p>
+            </article>
+            <article class="card stat">
+              <p class="label">Review Events</p>
+              <p id="kpiReviewEvents" class="value">-</p>
+            </article>
+            <article class="card stat">
+              <p class="label">Top Reviewer</p>
+              <p id="kpiTopReviewer" class="value">-</p>
+            </article>
+          </section>
+
+          <section class="tables-grid org-tables-grid">
+            <article class="card table-card">
+              <div class="table-head">
+                <h3>Reviewers Leaderboard</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Reviewer</th>
+                      <th>Total</th>
+                      <th>Approvals</th>
+                      <th>Changes Requested</th>
+                      <th>Comments</th>
+                      <th>PRs</th>
+                      <th>Repos</th>
+                      <th>Latest Review</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orgLeaderboardBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="card table-card">
+              <div class="table-head">
+                <h3>Hanging Pull Requests</h3>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Repo</th>
+                      <th>PR</th>
+                      <th>Author</th>
+                      <th>Reasons</th>
+                      <th>Idle</th>
+                      <th>Open</th>
+                      <th>Review</th>
+                      <th>Link</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orgHangingBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="/assets/org-insights.js"></script>
+  </body>
+</html>
