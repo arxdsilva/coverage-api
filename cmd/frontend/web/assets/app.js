@@ -264,6 +264,7 @@ async function performHomeRefresh(source = 'manual') {
   homeRefreshDurationMs = 0;
   updateHomeAutoRefreshStatus();
 
+  const heatmapWasOpen = heatmapOverlay.classList.contains('open');
   const contributorsWasOpen = contributorsOverlay.classList.contains('open');
 
   if (source === 'manual') {
@@ -272,6 +273,10 @@ async function performHomeRefresh(source = 'manual') {
 
   try {
     await loadProjects();
+
+    if (heatmapWasOpen) {
+      await loadHeatmap();
+    }
 
     if (contributorsWasOpen) {
       await loadAllContributors();
@@ -296,7 +301,11 @@ function toggleHeatmapOverlay(open) {
   heatmapOverlay.setAttribute('aria-hidden', String(!open));
 
   if (open) {
-    scheduleHeatmapLayout();
+    if (heatmapItems.length === 0) {
+      loadHeatmap();
+    } else {
+      scheduleHeatmapLayout();
+    }
   }
 }
 

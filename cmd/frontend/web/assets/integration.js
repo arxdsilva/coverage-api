@@ -834,6 +834,7 @@ async function loadHeatmap() {
   try {
     const url = new URL('/api/integration-test-runs/heatmap', window.location.origin);
     url.searchParams.set('runsPerProject', '10');
+    if (heatmapBranchFilter.value) url.searchParams.set('branch', heatmapBranchFilter.value);
     if (heatmapStatusFilter.value) url.searchParams.set('status', heatmapStatusFilter.value);
 
     const res = await fetch(url.toString());
