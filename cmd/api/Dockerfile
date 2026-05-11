@@ -16,6 +16,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 FROM gcr.io/distroless/static-debian12:nonroot
 
 COPY --from=builder /out/api /api
+COPY --from=builder /src/migrations /migrations
 
 EXPOSE 8080
 
