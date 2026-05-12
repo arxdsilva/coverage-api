@@ -88,6 +88,10 @@ func (s *stubProjectRepository) Create(ctx context.Context, project domain.Proje
 	panic("unexpected call")
 }
 
+func (s *stubProjectRepository) UpdateProjectThreshold(ctx context.Context, projectID string, threshold float64) (domain.Project, error) {
+	panic("unexpected call")
+}
+
 type stubCoverageRunRepository struct {
 	contributors []ContributorSummary
 	err          error

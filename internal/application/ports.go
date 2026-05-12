@@ -12,6 +12,7 @@ type ProjectRepository interface {
 	GetByID(ctx context.Context, projectID string) (domain.Project, error)
 	List(ctx context.Context, page int, pageSize int) ([]domain.Project, int, error)
 	Create(ctx context.Context, project domain.Project) (domain.Project, error)
+	UpdateProjectThreshold(ctx context.Context, projectID string, threshold float64) (domain.Project, error)
 }
 
 type CoverageRunRepository interface {
