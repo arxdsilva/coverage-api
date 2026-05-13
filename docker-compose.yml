@@ -18,7 +18,7 @@ services:
       retries: 10
 
   migrate:
-    image: golang:1.25-alpine
+    image: golang:1.26-alpine
     container_name: coverage-api-migrate
     working_dir: /app
     volumes:
@@ -57,7 +57,7 @@ services:
     restart: "no"
 
   api:
-    image: golang:1.25-alpine
+    image: golang:1.26-alpine
     container_name: coverage-api-app
     working_dir: /app
     volumes:
@@ -76,7 +76,7 @@ services:
       - "8080:8080"
 
   frontend:
-    image: golang:1.25-alpine
+    image: golang:1.26-alpine
     container_name: coverage-api-frontend
     working_dir: /app
     volumes:
