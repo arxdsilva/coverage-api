@@ -79,10 +79,14 @@ func (uc *IngestCoverageRunUseCase) Execute(ctx context.Context, in IngestCovera
 	if err != nil {
 		return IngestCoverageRunOutput{}, err
 	}
-
+	
 	threshold := project.GlobalThresholdPercent
-	if in.ThresholdPercent != nil {
-		threshold = *in.ThresholdPercent
+	if !created && in.ThresholdPercent != nil {
+		project, err = uc.projects.UpdateProjectThreshold(ctx, project.ID, *in.ThresholdPercent)
+		threshold = project.GlobalThresholdPercent
+		if err != nil {
+			return IngestCoverageRunOutput{}, NewInternal("failed to update project threshold", err)
+		} 
 	}
 
 	var baselineRun *domain.CoverageRun
@@ -169,12 +173,6 @@ func (uc *IngestCoverageRunUseCase) Execute(ctx context.Context, in IngestCovera
 func (uc *IngestCoverageRunUseCase) resolveOrCreateProject(ctx context.Context, in IngestCoverageRunInput) (domain.Project, bool, error) {
 	project, err := uc.projects.GetByKey(ctx, in.ProjectKey)
 	if err == nil {
-		if in.ThresholdPercent != nil {
-			project, err = uc.projects.UpdateProjectThreshold(ctx, project.ID, *in.ThresholdPercent)
-			if err != nil {
-				return domain.Project{}, false, NewInternal("failed to update project threshold", err)
-			}
-		}
 		return project, false, nil
 	}
 	if !errors.Is(err, domain.ErrNotFound) {
