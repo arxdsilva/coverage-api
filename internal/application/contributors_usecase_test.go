@@ -65,12 +65,20 @@ func TestListContributorsUseCaseExecute(t *testing.T) {
 }
 
 type stubProjectRepository struct {
-	project domain.Project
-	err    error
+	existing    *domain.Project
+	getByKeyErr error
+	project     domain.Project
+	err         error
 }
 
 func (s *stubProjectRepository) GetByKey(ctx context.Context, projectKey string) (domain.Project, error) {
-	panic("unexpected call")
+	if s.getByKeyErr != nil {
+		return domain.Project{}, s.getByKeyErr
+	}
+	if s.existing == nil {
+		return domain.Project{}, domain.ErrNotFound
+	}
+	return *s.existing, nil
 }
 
 func (s *stubProjectRepository) GetByID(ctx context.Context, projectID string) (domain.Project, error) {
@@ -85,7 +93,14 @@ func (s *stubProjectRepository) List(ctx context.Context, page int, pageSize int
 }
 
 func (s *stubProjectRepository) Create(ctx context.Context, project domain.Project) (domain.Project, error) {
-	panic("unexpected call")
+	if s.err != nil {
+		return domain.Project{}, s.err
+	}
+	return project, nil
+}
+
+func (s *stubProjectRepository) UpdateProjectThreshold(ctx context.Context, projectID string, threshold float64) (domain.Project, error) {
+	return s.project, nil
 }
 
 type stubCoverageRunRepository struct {
@@ -93,14 +108,18 @@ type stubCoverageRunRepository struct {
 	err          error
 	branch       string
 	limit        int
+	baseline     *domain.CoverageRun
 }
 
 func (s *stubCoverageRunRepository) Create(ctx context.Context, run domain.CoverageRun) (domain.CoverageRun, error) {
-	panic("unexpected call")
+	return run, nil
 }
 
 func (s *stubCoverageRunRepository) GetLatestByProjectAndBranch(ctx context.Context, projectID string, branch string) (domain.CoverageRun, error) {
-	panic("unexpected call")
+	if s.baseline == nil {
+		return domain.CoverageRun{}, domain.ErrNotFound
+	}
+	return *s.baseline, nil
 }
 
 func (s *stubCoverageRunRepository) GetLatestByProject(ctx context.Context, projectID string) (domain.CoverageRun, error) {

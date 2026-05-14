@@ -136,3 +136,30 @@ func (r *ProjectRepository) List(ctx context.Context, page int, pageSize int) ([
 
 	return projects, total, nil
 }
+
+func (r *ProjectRepository) UpdateProjectThreshold(ctx context.Context, projectID string, threshold float64) (domain.Project, error) {
+	q := getQuerier(ctx, r.pool)
+	var p domain.Project
+	err := q.QueryRow(ctx, `
+		UPDATE projects
+		SET global_threshold_percent = $2, updated_at = NOW()
+		WHERE id = $1
+		RETURNING id, project_key, COALESCE(name, ''), group_name, default_branch, global_threshold_percent, created_at, updated_at
+	`, projectID, threshold).Scan(
+		&p.ID,
+		&p.ProjectKey,
+		&p.Name,
+		&p.Group,
+		&p.DefaultBranch,
+		&p.GlobalThresholdPercent,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Project{}, domain.ErrNotFound
+		}
+		return domain.Project{}, fmt.Errorf("update project threshold: %w", err)
+	}
+	return p, nil
+}
