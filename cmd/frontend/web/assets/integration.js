@@ -108,11 +108,17 @@ toggleSidebar.addEventListener('click', () => {
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    clearIntegrationAutoRefresh();
     updateIntegrationAutoRefreshStatus();
     return;
   }
-  scheduleIntegrationAutoRefresh();
+
+  // If background timer execution was throttled, catch up immediately on focus.
+  if (integrationNextRefreshAt && Date.now() >= integrationNextRefreshAt && !integrationRefreshInFlight) {
+    void performIntegrationRefresh('auto');
+    return;
+  }
+
+  updateIntegrationAutoRefreshStatus();
 });
 
 initializeSidebarState();
@@ -196,12 +202,6 @@ function updateIntegrationAutoRefreshStatus() {
     return;
   }
 
-  if (document.hidden) {
-    integrationAutoRefreshStatus.textContent = `Paused (${intervalLabel}) while tab is hidden.`;
-    setIntegrationAutoRefreshProgress(0);
-    return;
-  }
-
   if (integrationRefreshInFlight) {
     integrationAutoRefreshStatus.textContent = `Refreshing now (${intervalLabel}).`;
     setIntegrationAutoRefreshProgress(0);
@@ -227,7 +227,7 @@ function scheduleIntegrationAutoRefresh() {
   integrationRefreshDurationMs = 0;
 
   const intervalMs = getIntegrationAutoRefreshIntervalMs();
-  if (!intervalMs || document.hidden) {
+  if (!intervalMs) {
     updateIntegrationAutoRefreshStatus();
     return;
   }
@@ -241,7 +241,7 @@ function scheduleIntegrationAutoRefresh() {
   }, 200);
 
   integrationRefreshTimeoutId = window.setTimeout(async () => {
-    if (document.hidden || integrationRefreshInFlight) {
+    if (integrationRefreshInFlight) {
       scheduleIntegrationAutoRefresh();
       return;
     }

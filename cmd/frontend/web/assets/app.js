@@ -112,11 +112,17 @@ window.addEventListener('resize', () => {
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    clearHomeAutoRefresh();
     updateHomeAutoRefreshStatus();
     return;
   }
-  scheduleHomeAutoRefresh();
+
+  // If background timer execution was throttled, catch up immediately on focus.
+  if (homeNextRefreshAt && Date.now() >= homeNextRefreshAt && !homeRefreshInFlight) {
+    void performHomeRefresh('auto');
+    return;
+  }
+
+  updateHomeAutoRefreshStatus();
 });
 
 initializeSidebarState();
@@ -193,12 +199,6 @@ function updateHomeAutoRefreshStatus() {
     return;
   }
 
-  if (document.hidden) {
-    autoRefreshStatus.textContent = `Paused (${intervalLabel}) while tab is hidden.`;
-    setHomeAutoRefreshProgress(0);
-    return;
-  }
-
   if (homeRefreshInFlight) {
     autoRefreshStatus.textContent = `Refreshing now (${intervalLabel}).`;
     setHomeAutoRefreshProgress(0);
@@ -224,7 +224,7 @@ function scheduleHomeAutoRefresh() {
   homeRefreshDurationMs = 0;
 
   const intervalMs = getHomeAutoRefreshIntervalMs();
-  if (!intervalMs || document.hidden) {
+  if (!intervalMs) {
     updateHomeAutoRefreshStatus();
     return;
   }
@@ -238,7 +238,7 @@ function scheduleHomeAutoRefresh() {
   }, 200);
 
   homeRefreshTimeoutId = window.setTimeout(async () => {
-    if (document.hidden || homeRefreshInFlight) {
+    if (homeRefreshInFlight) {
       scheduleHomeAutoRefresh();
       return;
     }
